@@ -1,14 +1,26 @@
 const db = require("../../config/db");
-const bcrypt = require("bcryptjs");
-const { Users } = db;
+const { BlockedUsers } = db;
 const message = require("../../utils/responseMessage");
 
 exports.findAll = async (req, res) => {
   try {
-    let item = await Users.findAll();
+    let blockedUser = await BlockedUsers.findAll({
+      include: [
+        {
+          model: db.Users,
+          as: "blocked",
+          attributes: ["id", "name", "email"],
+        },
+        {
+          model: db.Users,
+          as: "blocker",
+          attributes: ["id", "name", "email"],
+        },
+      ],
+    });
     res.json({
       status: 200,
-      data: item,
+      data: blockedUser,
       message: message.success.get("users"),
     });
   } catch (error) {
@@ -22,8 +34,21 @@ exports.findAll = async (req, res) => {
 
 exports.findByPk = async (req, res) => {
   try {
-    const item = await Users.findByPk(req.params.id);
-    if (!item) {
+    const blockedUser = await BlockedUsers.findByPk(req.params.id, {
+      include: [
+        {
+          model: db.Users,
+          as: "blocked",
+          attributes: ["id", "name", "email"],
+        },
+        {
+          model: db.Users,
+          as: "blocker",
+          attributes: ["id", "name", "email"],
+        },
+      ],
+    });
+    if (!blockedUser) {
       res.status(404).send({
         status: 404,
         message: message.error.get("users"),
@@ -31,7 +56,7 @@ exports.findByPk = async (req, res) => {
     } else {
       res.json({
         status: 200,
-        data: item,
+        data: blockedUser,
         message: message.success.get("users"),
       });
     }
@@ -45,14 +70,11 @@ exports.findByPk = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-  let user = req.body;
-  user.password = await bcrypt.hash(user.password, 10);
-
   try {
-    const item = await Users.create(user);
+    const blockedUser = await BlockedUsers.create(req.body);
     res.status(201).json({
       status: 201,
-      data: item,
+      data: blockedUser,
       message: message.success.create("users"),
     });
   } catch (error) {
@@ -66,17 +88,17 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const item = await Users.findByPk(req.params.id);
-    if (!item) {
+    let blockedUser = await BlockedUsers.findByPk(req.params.id);
+    if (!blockedUser) {
       res.status(404).send({
         status: 404,
         message: message.error.update("users"),
       });
     } else {
-      item = await item.update(req.body);
+      blockedUser = await blockedUser.update(req.body);
       res.status(201).json({
         status: 201,
-        data: item,
+        data: blockedUser,
         message: message.success.update("users"),
       });
     }
@@ -91,14 +113,14 @@ exports.update = async (req, res) => {
 
 exports.destroy = async (req, res) => {
   try {
-    const item = await Users.findByPk(req.params.id);
-    if (!item) {
+    const blockedUser = await BlockedUsers.findByPk(req.params.id);
+    if (!blockedUser) {
       res.status(404).send({
         status: 404,
         message: message.error.remove("users"),
       });
     } else {
-      await item.destroy();
+      await blockedUser.destroy();
       res.json({
         status: 200,
         message: message.success.remove("users"),

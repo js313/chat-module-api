@@ -1,5 +1,4 @@
 const db = require("../../config/db");
-const bcrypt = require("bcryptjs");
 const { Conversations } = db;
 const message = require("../../utils/responseMessage");
 
