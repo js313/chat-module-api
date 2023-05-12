@@ -26,7 +26,7 @@ module.exports = {
     conversations,
     groups,
     groups_members,
-    messages
+    messages,
   },
   routes,
 };

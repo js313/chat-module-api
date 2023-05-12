@@ -1,28 +1,45 @@
+const { Users } = require("../../config/db");
+
 module.exports = function (sequelize, DataTypes) {
   return sequelize.define(
-    "Users",
+    "Conversations",
     {
       id: {
         type: DataTypes.INTEGER,
+        allowNull: false,
         primaryKey: true,
         autoIncrement: true,
       },
-      name: {
-        type: DataTypes.STRING(255),
+      sender_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: Users,
+          key: "id",
+        },
+      },
+      receiver_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: Users,
+          key: "id",
+        },
+      },
+      created_at: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
         allowNull: false,
       },
-      email: {
-        type: DataTypes.STRING(255),
+      updated_at: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
         allowNull: false,
       },
-      password: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-      }
     },
     {
+      tableName: "conversations",
       timestamps: false,
-      tableName: "users",
     }
   );
 };

@@ -4,25 +4,40 @@ module.exports = function (sequelize, DataTypes) {
     {
       id: {
         type: DataTypes.INTEGER,
+        allowNull: false,
         primaryKey: true,
         autoIncrement: true,
+      },
+      email: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+        unique: true,
+        validate: {
+          isEmail: true,
+        },
+      },
+      password: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
       },
       name: {
         type: DataTypes.STRING(255),
         allowNull: false,
       },
-      email: {
-        type: DataTypes.STRING(255),
+      created_at: {
+        type: DataTypes.DATE,
         allowNull: false,
+        defaultValue: DataTypes.NOW,
       },
-      password: {
-        type: DataTypes.STRING(255),
+      updated_at: {
+        type: DataTypes.DATE,
         allowNull: false,
-      }
+        defaultValue: DataTypes.NOW,
+      },
     },
     {
-      timestamps: false,
       tableName: "users",
+      timestamps: false,
     }
   );
 };

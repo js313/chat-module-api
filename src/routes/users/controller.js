@@ -3,21 +3,59 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Users } = db;
 const message = require("../../utils/responseMessage");
-exports.login = async (req, res) => {
-  const { email, password } = req.body;
-  const user = await Users.findOne({ where: { email } });
 
-  if (!user) {
-    return res.status(401).json({ message: "Invalid email or password" });
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await Users.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY, {
+      expiresIn: "1000h",
+    });
+    res.status(200).json({
+      user: {
+        name: user.name,
+        email: user.email,
+      },
+      token,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
   }
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) {
-    return res.status(401).json({ message: "Invalid email or password" });
+};
+
+exports.register = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    let user = await Users.findOne({ where: { email } });
+
+    if (user) {
+      return res.status(409).json({ message: "User already exists" });
+    }
+    const hashedPassword = await bcrypt.hash(password, 12);
+    user = await Users.create({ name, email, password: hashedPassword });
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY, {
+      expiresIn: "1000h",
+    });
+    res.status(200).json({
+      user: {
+        name: user.name,
+        email: user.email,
+      },
+      token,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
   }
-  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY, {
-    expiresIn: "1000h",
-  });
-  res.json({ token });
 };
 
 exports.findAll = async (req, res) => {
@@ -29,6 +67,7 @@ exports.findAll = async (req, res) => {
       message: message.success.get("users"),
     });
   } catch (error) {
+    console.log(error);
     res.status(500).send({
       status: 500,
       message: message.error.get("users"),
@@ -39,6 +78,7 @@ exports.findAll = async (req, res) => {
 
 exports.findByPk = async (req, res) => {
   try {
+    console.log("edfn|", req.params.id);
     const item = await Users.findByPk(req.params.id);
     if (!item) {
       res.status(404).send({
@@ -83,7 +123,7 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const item = await Users.findByPk(req.params.id);
+    let item = await Users.findByPk(req.params.id);
     if (!item) {
       res.status(404).send({
         status: 404,

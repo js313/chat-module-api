@@ -3,6 +3,9 @@ const router = express.Router();
 const controller = require("./controller");
 const passport = require("../../middlewares/passport");
 
+router.post("/login", controller.login);
+router.post("/register", controller.register);
+
 router.get(
   "/",
   passport.authenticate("jwt", { session: false }),
@@ -21,7 +24,7 @@ router.post(
 );
 
 router.put(
-  "/",
+  "/:id",
   passport.authenticate("jwt", { session: false }),
   controller.update
 );

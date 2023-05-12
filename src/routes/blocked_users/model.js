@@ -1,28 +1,43 @@
 module.exports = function (sequelize, DataTypes) {
   return sequelize.define(
-    "Users",
+    "BlockedUsers",
     {
       id: {
         type: DataTypes.INTEGER,
-        primaryKey: true,
+        allowNull: false,
         autoIncrement: true,
+        primaryKey: true,
       },
-      name: {
-        type: DataTypes.STRING(255),
+      blocker_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: "User",
+          key: "id",
+        },
+      },
+      blocked_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: "User",
+          key: "id",
+        },
+      },
+      created_at: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
         allowNull: false,
       },
-      email: {
-        type: DataTypes.STRING(255),
+      updated_at: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
         allowNull: false,
       },
-      password: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-      }
     },
     {
+      tableName: "blocked_users",
       timestamps: false,
-      tableName: "users",
     }
   );
 };
