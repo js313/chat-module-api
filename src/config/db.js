@@ -26,7 +26,7 @@ db.Op = Op;
 
 db.Users = require("../routes/users/model.js")(sequelize, Sequelize);
 
-// db.Messages = require("../routes/messages/model.js")(sequelize, Sequelize);
+db.Messages = require("../routes/messages/model.js")(sequelize, Sequelize);
 
 db.Conversations = require("../routes/conversations/model.js")(
   sequelize,
@@ -40,7 +40,7 @@ db.BlockedUsers = require("../routes/blocked_users/model.js")(
 
 // relations
 
-//Convertion
+//Conversations
 db.Conversations.belongsTo(db.Users, { foreignKey: "sender_id", as: "sender" });
 db.Conversations.belongsTo(db.Users, {
   foreignKey: "receiver_id",
@@ -56,10 +56,33 @@ db.Users.hasMany(db.Conversations, {
 });
 
 //Blocked User
-db.BlockedUsers.belongsTo(db.Users, { foreignKey: "blocker_id" });
-db.BlockedUsers.belongsTo(db.Users, { foreignKey: "blocked_id" });
+db.BlockedUsers.belongsTo(db.Users, {
+  foreignKey: "blocker_id",
+  as: "blocker",
+});
+db.BlockedUsers.belongsTo(db.Users, {
+  foreignKey: "blocked_id",
+  as: "blocked",
+});
 db.Users.hasMany(db.BlockedUsers, { foreignKey: "blocker_id" });
 db.Users.hasMany(db.BlockedUsers, { foreignKey: "blocked_id" });
+
+//Messages
+db.Messages.belongsTo(db.Users, {
+  foreignKey: "sender_id",
+  as: "sender",
+});
+db.Messages.belongsTo(db.Conversations, {
+  foreignKey: "conversation_id",
+  as: "conversation",
+});
+// db.Messages.belongsTo(db.Groups, { foreignKey: "group_id" });
+db.Users.hasMany(db.Messages, { foreignKey: "sender_id", as: "messages" });
+db.Conversations.hasMany(db.Messages, {
+  foreignKey: "conversation_id",
+  as: "messages",
+});
+// db.Groups.hasMany(db.Messages, { foreignKey: "group_id" });
 
 sequelize.sync({ force: false }).then(() => {
   console.log("yes re-sync done!");
