@@ -1,3 +1,5 @@
+const { Users } = require("../../config/db");
+
 module.exports = function (sequelize, DataTypes) {
   return sequelize.define(
     "BlockedUsers",
@@ -12,7 +14,7 @@ module.exports = function (sequelize, DataTypes) {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "User",
+          model: Users,
           key: "id",
         },
       },
@@ -20,7 +22,7 @@ module.exports = function (sequelize, DataTypes) {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "User",
+          model: Users,
           key: "id",
         },
       },
