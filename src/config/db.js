@@ -38,6 +38,8 @@ db.BlockedUsers = require("../routes/blocked_users/model.js")(
   Sequelize
 );
 
+db.Groups = require("../routes/groups/model.js")(sequelize, Sequelize);
+
 // relations
 
 //Conversations
@@ -76,13 +78,20 @@ db.Messages.belongsTo(db.Conversations, {
   foreignKey: "conversation_id",
   as: "conversation",
 });
-// db.Messages.belongsTo(db.Groups, { foreignKey: "group_id" });
+db.Messages.belongsTo(db.Groups, { foreignKey: "group_id" });
 db.Users.hasMany(db.Messages, { foreignKey: "sender_id", as: "messages" });
 db.Conversations.hasMany(db.Messages, {
   foreignKey: "conversation_id",
   as: "messages",
 });
-// db.Groups.hasMany(db.Messages, { foreignKey: "group_id" });
+db.Groups.hasMany(db.Messages, { foreignKey: "group_id" });
+
+//Groups
+db.Groups.belongsTo(db.Users, { foreignKey: "created_by", as: "creator" });
+db.Users.hasMany(db.Groups, {
+  foreignKey: "created_by",
+  as: "groups",
+});
 
 sequelize.sync({ force: false }).then(() => {
   console.log("yes re-sync done!");

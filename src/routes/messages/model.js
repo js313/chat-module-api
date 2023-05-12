@@ -1,4 +1,4 @@
-const { Conversations, Users } = require("../../config/db");
+const { Conversations, Users, Groups } = require("../../config/db");
 
 module.exports = function (sequelize, DataTypes) {
   return sequelize.define(
@@ -20,9 +20,7 @@ module.exports = function (sequelize, DataTypes) {
       },
       hidden: {
         type: DataTypes.VIRTUAL(DataTypes.BOOLEAN),
-        get() {
-          return false; // this is a virtual field and its value will always be false
-        },
+        defaultValue: false,
       },
       sender_id: {
         type: DataTypes.INTEGER,
@@ -40,14 +38,14 @@ module.exports = function (sequelize, DataTypes) {
           key: "id",
         },
       },
-      // group_id: {
-      //   type: DataTypes.INTEGER,
-      //   allowNull: true,
-      //   references: {
-      //     model: Groups,
-      //     key: "id",
-      //   },
-      // },
+      group_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: Groups,
+          key: "id",
+        },
+      },
       created_at: {
         type: DataTypes.DATE,
         allowNull: false,
