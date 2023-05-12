@@ -5,7 +5,7 @@ const message = require("../../utils/responseMessage");
 
 exports.findAll = async (req, res) => {
   try {
-    let item = await Conversations.findAll({
+    let conversation = await Conversations.findAll({
       include: [
         {
           model: db.Users,
@@ -21,7 +21,7 @@ exports.findAll = async (req, res) => {
     });
     res.json({
       status: 200,
-      data: item,
+      data: conversation,
       message: message.success.get("conversations"),
     });
   } catch (error) {
@@ -35,7 +35,7 @@ exports.findAll = async (req, res) => {
 
 exports.findByPk = async (req, res) => {
   try {
-    const item = await Conversations.findByPk(req.params.id, {
+    const conversation = await Conversations.findByPk(req.params.id, {
       include: [
         {
           model: db.Users,
@@ -49,7 +49,7 @@ exports.findByPk = async (req, res) => {
         },
       ],
     });
-    if (!item) {
+    if (!conversation) {
       res.status(404).send({
         status: 404,
         message: message.error.get("conversations"),
@@ -57,7 +57,7 @@ exports.findByPk = async (req, res) => {
     } else {
       res.json({
         status: 200,
-        data: item,
+        data: conversation,
         message: message.success.get("conversations"),
       });
     }
@@ -71,13 +71,13 @@ exports.findByPk = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-  let conversation = req.body;
+  let conv = req.body;
 
   try {
-    const item = await Conversations.create(conversation);
+    const conversation = await Conversations.create(conv);
     res.status(201).json({
       status: 201,
-      data: item,
+      data: conversation,
       message: message.success.create("conversations"),
     });
   } catch (error) {
@@ -91,17 +91,17 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const item = await Conversations.findByPk(req.params.id);
-    if (!item) {
+    let conversation = await Conversations.findByPk(req.params.id);
+    if (!conversation) {
       res.status(404).send({
         status: 404,
         message: message.error.update("conversations"),
       });
     } else {
-      item = await item.update(req.body);
+      conversation = await conversation.update(req.body);
       res.status(201).json({
         status: 201,
-        data: item,
+        data: conversation,
         message: message.success.update("conversations"),
       });
     }
@@ -116,14 +116,14 @@ exports.update = async (req, res) => {
 
 exports.destroy = async (req, res) => {
   try {
-    const item = await Conversations.findByPk(req.params.id);
-    if (!item) {
+    const conversation = await Conversations.findByPk(req.params.id);
+    if (!conversation) {
       res.status(404).send({
         status: 404,
         message: message.error.remove("conversations"),
       });
     } else {
-      await item.destroy();
+      await conversation.destroy();
       res.json({
         status: 200,
         message: message.success.remove("conversations"),

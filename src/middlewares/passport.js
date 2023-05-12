@@ -10,12 +10,12 @@ const jwtOptions = {
 
 const strategy = new JwtStrategy(jwtOptions, async (jwtPayload, next) => {
   try {
-    const user = (await model.findByPk(jwtPayload.id)).get({ plain: true });
+    const user = (await model.findByPk(jwtPayload.id))?.get({ plain: true });
 
     if (user) {
       next(null, { id: user.id, email: user.email });
     } else {
-      next(null, false);
+      throw new Error("Unauthorized");
     }
   } catch (err) {
     next(err, false);

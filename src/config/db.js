@@ -26,7 +26,7 @@ db.Op = Op;
 
 db.Users = require("../routes/users/model.js")(sequelize, Sequelize);
 
-db.Messages = require("../routes/messages/model.js")(sequelize, Sequelize);
+// db.Messages = require("../routes/messages/model.js")(sequelize, Sequelize);
 
 db.Conversations = require("../routes/conversations/model.js")(
   sequelize,

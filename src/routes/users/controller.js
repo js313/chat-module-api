@@ -60,10 +60,10 @@ exports.register = async (req, res) => {
 
 exports.findAll = async (req, res) => {
   try {
-    let item = await Users.findAll();
+    let user = await Users.findAll();
     res.json({
       status: 200,
-      data: item,
+      data: user,
       message: message.success.get("users"),
     });
   } catch (error) {
@@ -79,8 +79,8 @@ exports.findAll = async (req, res) => {
 exports.findByPk = async (req, res) => {
   try {
     console.log("edfn|", req.params.id);
-    const item = await Users.findByPk(req.params.id);
-    if (!item) {
+    const user = await Users.findByPk(req.params.id);
+    if (!user) {
       res.status(404).send({
         status: 404,
         message: message.error.get("users"),
@@ -88,7 +88,7 @@ exports.findByPk = async (req, res) => {
     } else {
       res.json({
         status: 200,
-        data: item,
+        data: user,
         message: message.success.get("users"),
       });
     }
@@ -106,10 +106,10 @@ exports.create = async (req, res) => {
   user.password = await bcrypt.hash(user.password, 10);
 
   try {
-    const item = await Users.create(user);
+    const user = await Users.create(user);
     res.status(201).json({
       status: 201,
-      data: item,
+      data: user,
       message: message.success.create("users"),
     });
   } catch (error) {
@@ -123,17 +123,17 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    let item = await Users.findByPk(req.params.id);
-    if (!item) {
+    let user = await Users.findByPk(req.params.id);
+    if (!user) {
       res.status(404).send({
         status: 404,
         message: message.error.update("users"),
       });
     } else {
-      item = await item.update(req.body);
+      user = await user.update(req.body);
       res.status(201).json({
         status: 201,
-        data: item,
+        data: user,
         message: message.success.update("users"),
       });
     }
@@ -148,14 +148,14 @@ exports.update = async (req, res) => {
 
 exports.destroy = async (req, res) => {
   try {
-    const item = await Users.findByPk(req.params.id);
-    if (!item) {
+    const user = await Users.findByPk(req.params.id);
+    if (!user) {
       res.status(404).send({
         status: 404,
         message: message.error.remove("users"),
       });
     } else {
-      await item.destroy();
+      await user.destroy();
       res.json({
         status: 200,
         message: message.success.remove("users"),
