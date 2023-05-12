@@ -1,20 +1,32 @@
 const db = require("../../config/db");
-const bcrypt = require("bcryptjs");
-const { Users } = db;
-const message = require("../../utils/responseMessage");
+const { Messages } = db;
+const rmessage = require("../../utils/responseMessage");
 
 exports.findAll = async (req, res) => {
   try {
-    let item = await Users.findAll();
+    let message = await Messages.findAll({
+      include: [
+        {
+          model: db.Users,
+          as: "sender",
+          attributes: ["id", "name", "email"],
+        },
+        {
+          model: db.Conversations,
+          as: "conversation",
+          attributes: ["id", "sender_id", "receiver_id"],
+        },
+      ],
+    });
     res.json({
       status: 200,
-      data: item,
-      message: message.success.get("users"),
+      data: message,
+      message: rmessage.success.get("messages"),
     });
   } catch (error) {
     res.status(500).send({
       status: 500,
-      message: message.error.get("users"),
+      message: rmessage.error.get("messages"),
       error: error.message,
     });
   }
@@ -22,43 +34,53 @@ exports.findAll = async (req, res) => {
 
 exports.findByPk = async (req, res) => {
   try {
-    const item = await Users.findByPk(req.params.id);
-    if (!item) {
+    const message = await Messages.findByPk(req.params.id, {
+      include: [
+        {
+          model: db.Users,
+          as: "sender",
+          attributes: ["id", "name", "email"],
+        },
+        {
+          model: db.Conversations,
+          as: "conversation",
+          attributes: ["id", "sender_id", "receiver_id"],
+        },
+      ],
+    });
+    if (!message) {
       res.status(404).send({
         status: 404,
-        message: message.error.get("users"),
+        message: rmessage.error.get("messages"),
       });
     } else {
       res.json({
         status: 200,
-        data: item,
-        message: message.success.get("users"),
+        data: message,
+        message: rmessage.success.get("messages"),
       });
     }
   } catch (error) {
     res.status(500).send({
       status: 500,
-      message: message.error.get("users"),
+      message: rmessage.error.get("messages"),
       error: error.message,
     });
   }
 };
 
 exports.create = async (req, res) => {
-  let user = req.body;
-  user.password = await bcrypt.hash(user.password, 10);
-
   try {
-    const item = await Users.create(user);
+    const message = await Messages.create(req.body);
     res.status(201).json({
       status: 201,
-      data: item,
-      message: message.success.create("users"),
+      data: message,
+      message: rmessage.success.create("messages"),
     });
   } catch (error) {
     res.status(500).send({
       status: 500,
-      message: message.error.create("users"),
+      message: rmessage.error.create("messages"),
       error: error.message,
     });
   }
@@ -66,24 +88,24 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const item = await Users.findByPk(req.params.id);
-    if (!item) {
+    let message = await Messages.findByPk(req.params.id);
+    if (!message) {
       res.status(404).send({
         status: 404,
-        message: message.error.update("users"),
+        message: rmessage.error.update("messages"),
       });
     } else {
-      item = await item.update(req.body);
+      message = await message.update(req.body);
       res.status(201).json({
         status: 201,
-        data: item,
-        message: message.success.update("users"),
+        data: message,
+        message: rmessage.success.update("messages"),
       });
     }
   } catch (error) {
     res.status(500).send({
       status: 500,
-      message: message.error.update("users"),
+      message: rmessage.error.update("messages"),
       error: error.message,
     });
   }
@@ -91,23 +113,23 @@ exports.update = async (req, res) => {
 
 exports.destroy = async (req, res) => {
   try {
-    const item = await Users.findByPk(req.params.id);
-    if (!item) {
+    const message = await Messages.findByPk(req.params.id);
+    if (!message) {
       res.status(404).send({
         status: 404,
-        message: message.error.remove("users"),
+        message: rmessage.error.remove("messages"),
       });
     } else {
-      await item.destroy();
+      await message.destroy();
       res.json({
         status: 200,
-        message: message.success.remove("users"),
+        message: rmessage.success.remove("messages"),
       });
     }
   } catch (error) {
     res.status(500).send({
       status: 500,
-      message: message.error.remove("users"),
+      message: rmessage.error.remove("messages"),
       error: error.message,
     });
   }

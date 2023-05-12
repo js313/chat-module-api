@@ -2,7 +2,7 @@ const { Conversations, Users } = require("../../config/db");
 
 module.exports = function (sequelize, DataTypes) {
   return sequelize.define(
-    "Message",
+    "Messages",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -51,10 +51,12 @@ module.exports = function (sequelize, DataTypes) {
       created_at: {
         type: DataTypes.DATE,
         allowNull: false,
+        defaultValue: DataTypes.NOW,
       },
       updated_at: {
         type: DataTypes.DATE,
         allowNull: false,
+        defaultValue: DataTypes.NOW,
       },
     },
     {
