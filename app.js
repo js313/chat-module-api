@@ -1,4 +1,5 @@
 var express = require("express");
+const http = require("http");
 var logger = require("morgan");
 const cors = require("cors");
 const bodyParser = require("body-parser");
@@ -11,6 +12,10 @@ app.use(logger("dev"));
 // app.use(express.static('static'))
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
+const socketServer = require("./socketServer");
+const server = http.createServer(app);
+socketServer.registerSocketServer(server);
 
 app.get("/", async function (req, res, next) {
   res.status(200).send("successully connected");
@@ -32,7 +37,7 @@ app.use(function (err, req, res, next) {
     error: err.message,
   });
 });
-app.listen(4001, function () {
+server.listen(4001, function () {
   console.log("listening on port : http://localhost:4001");
 });
 
