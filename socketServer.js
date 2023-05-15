@@ -1,5 +1,6 @@
 const socketIO = require("socket.io");
 const authSocket = require("./src/middlewares/authSocket");
+const { addUserToStore } = require("./src/socket/store");
 
 let io = null;
 
@@ -16,6 +17,7 @@ const registerSocketServer = (server) => {
 
   io.on("connection", async (socket) => {
     console.log("New client connected: " + socket.id);
+    addUserToStore(socket.user.id, socket.id);
     socket.on("test", (data) => {
       io.to(socket.id).emit("test", { msg: "pong" });
     });

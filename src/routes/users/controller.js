@@ -16,9 +16,13 @@ exports.login = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY, {
-      expiresIn: "1000h",
-    });
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET_KEY,
+      {
+        expiresIn: "1000h",
+      }
+    );
     res.status(200).json({
       user: {
         name: user.name,
@@ -42,9 +46,13 @@ exports.register = async (req, res) => {
     }
     const hashedPassword = await bcrypt.hash(password, 12);
     user = await Users.create({ name, email, password: hashedPassword });
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY, {
-      expiresIn: "1000h",
-    });
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET_KEY,
+      {
+        expiresIn: "1000h",
+      }
+    );
     res.status(200).json({
       user: {
         name: user.name,
