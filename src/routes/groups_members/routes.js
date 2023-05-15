@@ -21,7 +21,7 @@ router.post(
 );
 
 router.put(
-  "/",
+  "/:id",
   passport.authenticate("jwt", { session: false }),
   controller.update
 );

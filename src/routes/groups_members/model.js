@@ -29,6 +29,7 @@ module.exports = function (sequelize, DataTypes) {
       joined_at: {
         type: DataTypes.DATE,
         allowNull: false,
+        defaultValue: DataTypes.NOW,
       },
       left_at: {
         type: DataTypes.DATE,
