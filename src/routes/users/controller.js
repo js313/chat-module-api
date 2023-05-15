@@ -78,7 +78,6 @@ exports.findAll = async (req, res) => {
 
 exports.findByPk = async (req, res) => {
   try {
-    console.log("edfn|", req.params.id);
     const user = await Users.findByPk(req.params.id);
     if (!user) {
       res.status(404).send({

@@ -1,20 +1,19 @@
 const db = require("../../config/db");
-const bcrypt = require("bcryptjs");
-const { Users } = db;
+const { Groups } = db;
 const message = require("../../utils/responseMessage");
 
 exports.findAll = async (req, res) => {
   try {
-    let item = await Users.findAll();
+    let group = await Groups.findAll();
     res.json({
       status: 200,
-      data: item,
-      message: message.success.get("users"),
+      data: group,
+      message: message.success.get("groups"),
     });
   } catch (error) {
     res.status(500).send({
       status: 500,
-      message: message.error.get("users"),
+      message: message.error.get("groups"),
       error: error.message,
     });
   }
@@ -22,43 +21,40 @@ exports.findAll = async (req, res) => {
 
 exports.findByPk = async (req, res) => {
   try {
-    const item = await Users.findByPk(req.params.id);
-    if (!item) {
+    const group = await Groups.findByPk(req.params.id);
+    if (!group) {
       res.status(404).send({
         status: 404,
-        message: message.error.get("users"),
+        message: message.error.get("groups"),
       });
     } else {
       res.json({
         status: 200,
-        data: item,
-        message: message.success.get("users"),
+        data: group,
+        message: message.success.get("groups"),
       });
     }
   } catch (error) {
     res.status(500).send({
       status: 500,
-      message: message.error.get("users"),
+      message: message.error.get("groups"),
       error: error.message,
     });
   }
 };
 
 exports.create = async (req, res) => {
-  let user = req.body;
-  user.password = await bcrypt.hash(user.password, 10);
-
   try {
-    const item = await Users.create(user);
+    const group = await Groups.create(req.body);
     res.status(201).json({
       status: 201,
-      data: item,
-      message: message.success.create("users"),
+      data: group,
+      message: message.success.create("groups"),
     });
   } catch (error) {
     res.status(500).send({
       status: 500,
-      message: message.error.create("users"),
+      message: message.error.create("groups"),
       error: error.message,
     });
   }
@@ -66,24 +62,24 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const item = await Users.findByPk(req.params.id);
-    if (!item) {
+    const group = await Groups.findByPk(req.params.id);
+    if (!group) {
       res.status(404).send({
         status: 404,
-        message: message.error.update("users"),
+        message: message.error.update("groups"),
       });
     } else {
-      item = await item.update(req.body);
+      group = await group.update(req.body);
       res.status(201).json({
         status: 201,
-        data: item,
-        message: message.success.update("users"),
+        data: group,
+        message: message.success.update("groups"),
       });
     }
   } catch (error) {
     res.status(500).send({
       status: 500,
-      message: message.error.update("users"),
+      message: message.error.update("groups"),
       error: error.message,
     });
   }
@@ -91,23 +87,23 @@ exports.update = async (req, res) => {
 
 exports.destroy = async (req, res) => {
   try {
-    const item = await Users.findByPk(req.params.id);
-    if (!item) {
+    const group = await Groups.findByPk(req.params.id);
+    if (!group) {
       res.status(404).send({
         status: 404,
-        message: message.error.remove("users"),
+        message: message.error.remove("groups"),
       });
     } else {
-      await item.destroy();
+      await group.destroy();
       res.json({
         status: 200,
-        message: message.success.remove("users"),
+        message: message.success.remove("groups"),
       });
     }
   } catch (error) {
     res.status(500).send({
       status: 500,
-      message: message.error.remove("users"),
+      message: message.error.remove("groups"),
       error: error.message,
     });
   }
