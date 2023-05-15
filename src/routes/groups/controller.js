@@ -62,7 +62,7 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const group = await Groups.findByPk(req.params.id);
+    let group = await Groups.findByPk(req.params.id);
     if (!group) {
       res.status(404).send({
         status: 404,
