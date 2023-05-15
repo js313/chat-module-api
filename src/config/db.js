@@ -105,6 +105,7 @@ db.BlockedUsers.belongsTo(db.Users, {
 db.Members.belongsTo(db.Groups, { foreignKey: "group_id", as: "group" });
 db.Members.belongsTo(db.Users, { foreignKey: "user_id", as: "member" });
 db.Users.belongsToMany(db.Groups, {
+  //these create a unique index, such that same combination of user_id and group_id does not exist
   through: db.Members,
   foreignKey: "user_id",
   otherKey: "group_id",
