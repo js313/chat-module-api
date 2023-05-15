@@ -1,6 +1,6 @@
 const socketIO = require("socket.io");
 const authSocket = require("./src/middlewares/authSocket");
-const { addUserToStore } = require("./src/socket/store");
+const { addUserToStore, removeUserFromStore } = require("./src/socket/store");
 
 let io = null;
 
@@ -22,6 +22,7 @@ const registerSocketServer = (server) => {
       io.to(socket.id).emit("test", { msg: "pong" });
     });
     socket.on("disconnect", async () => {
+      removeUserFromStore(socket.user.id, socket.id);
       console.log("Client disconnected");
     });
   });

@@ -12,7 +12,7 @@ const addUserToStore = (userId, socketId) => {
 const removeUserFromStore = (userId, socketId) => {
   if (connectedUsers.has(userId)) {
     let socketIds = connectedUsers.get(userId);
-    socketIds = socketIds(sid => {
+    socketIds = socketIds.filter(sid => {
         return sid !== socketId
     })
     if(socketIds.length > 0) connectedUsers.set(userId) = socketIds
