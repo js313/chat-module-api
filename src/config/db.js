@@ -40,6 +40,8 @@ db.BlockedUsers = require("../routes/blocked_users/model.js")(
 
 db.Groups = require("../routes/groups/model.js")(sequelize, Sequelize);
 
+db.Members = require("../routes/groups_members/model.js")(sequelize, Sequelize);
+
 // relations
 
 //Conversations
@@ -56,18 +58,6 @@ db.Users.hasMany(db.Conversations, {
   foreignKey: "receiver_id",
   as: "user2_conversations",
 });
-
-//Blocked User
-db.BlockedUsers.belongsTo(db.Users, {
-  foreignKey: "blocker_id",
-  as: "blocker",
-});
-db.BlockedUsers.belongsTo(db.Users, {
-  foreignKey: "blocked_id",
-  as: "blocked",
-});
-db.Users.hasMany(db.BlockedUsers, { foreignKey: "blocker_id" });
-db.Users.hasMany(db.BlockedUsers, { foreignKey: "blocked_id" });
 
 //Messages
 db.Messages.belongsTo(db.Users, {
@@ -91,6 +81,39 @@ db.Groups.belongsTo(db.Users, { foreignKey: "created_by", as: "creator" });
 db.Users.hasMany(db.Groups, {
   foreignKey: "created_by",
   as: "groups",
+});
+
+//Blocked Users
+db.Users.hasMany(db.BlockedUsers, {
+  foreignKey: "blocker_id",
+  as: "blockers",
+});
+db.Users.hasMany(db.BlockedUsers, {
+  foreignKey: "blocked_id",
+  as: "blockedBy",
+});
+db.BlockedUsers.belongsTo(db.Users, {
+  foreignKey: "blocker_id",
+  as: "blocker",
+});
+db.BlockedUsers.belongsTo(db.Users, {
+  foreignKey: "blocked_id",
+  as: "blocked",
+});
+
+//Members
+db.Members.belongsTo(db.Groups, { foreignKey: "group_id", as: "group" });
+db.Members.belongsTo(db.Users, { foreignKey: "user_id", as: "member" });
+db.Users.belongsToMany(db.Groups, {
+  through: db.Members,
+  foreignKey: "user_id",
+  otherKey: "group_id",
+});
+
+db.Groups.belongsToMany(db.Users, {
+  through: db.Members,
+  foreignKey: "group_id",
+  otherKey: "user_id",
 });
 
 sequelize.sync({ force: false }).then(() => {

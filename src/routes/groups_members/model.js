@@ -1,28 +1,43 @@
+const { Groups, Users } = require("../../config/db");
+
 module.exports = function (sequelize, DataTypes) {
   return sequelize.define(
-    "Users",
+    "Members",
     {
       id: {
         type: DataTypes.INTEGER,
-        primaryKey: true,
+        allowNull: false,
         autoIncrement: true,
+        primaryKey: true,
       },
-      name: {
-        type: DataTypes.STRING(255),
+      group_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: Groups,
+          key: "id",
+        },
+      },
+      user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: Users,
+          key: "id",
+        },
+      },
+      joined_at: {
+        type: DataTypes.DATE,
         allowNull: false,
       },
-      email: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
+      left_at: {
+        type: DataTypes.DATE,
+        defaultValue: null,
       },
-      password: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-      }
     },
     {
+      tableName: "members",
       timestamps: false,
-      tableName: "users",
     }
   );
 };
