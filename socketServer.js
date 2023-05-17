@@ -1,11 +1,9 @@
 const socketIO = require("socket.io");
 const authSocket = require("./src/middlewares/authSocket");
-const {
-  addUserToStore,
-  removeUserFromStore,
-  connectedUsers,
-} = require("./src/socket/store");
-const { Users, Op } = require("./src/config/db");
+const { addUserToStore, removeUserFromStore } = require("./src/socket/store");
+const { updateOnlineUsers } = require("./src/socket/userUpdates");
+const { updateOnlineGroups } = require("./src/socket/groupUpdates");
+const { getAllMessage } = require("./src/socket/messageUpdates");
 
 let io = null;
 
@@ -22,42 +20,21 @@ const registerSocketServer = (server) => {
   io.on("connection", async (socket) => {
     console.log("New client connected: " + socket.id);
     addUserToStore(socket.user.id, socket.id);
-    updateOnlineusers(socket);
+    updateOnlineUsers(io);
+    updateOnlineGroups(socket, io);
+    socket.on("messages", async (data) => {
+      let message = await getAllMessage(socket, data);
+      io.to(socket.id).emit("messages", message);
+    });
     socket.on("test", (data) => {
       io.to(socket.id).emit("test", { msg: "pong" });
     });
     socket.on("disconnect", async () => {
       removeUserFromStore(socket.user.id, socket.id);
-      updateOnlineusers(socket);
+      updateOnlineUsers(io);
       console.log("Client disconnected");
     });
   });
-};
-
-const updateOnlineusers = async (socket) => {
-  try {
-    const users = await getUsersList(socket);
-    io.emit("updateUsersList", users);
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-const getUsersList = async (socket) => {
-  try {
-    let users = await Users.findAll({
-      attributes: { exclude: ["password"] },
-    });
-    users = users.map((user) => {
-      return {
-        ...user.dataValues,
-        online: connectedUsers.has(user.id) ? true : false,
-      };
-    });
-    return users;
-  } catch (error) {
-    console.log(error);
-  }
 };
 
 module.exports = { registerSocketServer };
