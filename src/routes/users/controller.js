@@ -1,7 +1,7 @@
 const db = require("../../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { Users } = db;
+const { Users, Op } = db;
 const message = require("../../utils/responseMessage");
 
 exports.login = async (req, res) => {
@@ -53,7 +53,7 @@ exports.register = async (req, res) => {
         expiresIn: "1000h",
       }
     );
-    res.status(200).json({
+    res.status(201).json({
       user: {
         name: user.name,
         email: user.email,
@@ -68,7 +68,10 @@ exports.register = async (req, res) => {
 
 exports.findAll = async (req, res) => {
   try {
-    let user = await Users.findAll();
+    let user = await Users.findAll({
+      where: { id: { [Op.not]: req.user.id } },
+      attributes: { exclude: ["password"] },
+    });
     res.json({
       status: 200,
       data: user,
