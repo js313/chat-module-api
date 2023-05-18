@@ -19,19 +19,20 @@ const getAllMessage = async (socket, data) => {
         user_id: socket.user.id,
       });
       if (member) {
-        query.member = conversation_id;
+        query.group_id = group_id;
       }
     }
     if (Object.keys(query).length === 0) {
       return [];
     }
+    console.log(query);
     const messages = await Messages.findAll({ where: query });
     if (!messages) {
       throw new Error("Message not found");
     }
     return messages;
   } catch (error) {
-    throw new Error(error);
+    console.log(error);
   }
 };
 

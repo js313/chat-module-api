@@ -25,6 +25,7 @@ exports.login = async (req, res) => {
     );
     res.status(200).json({
       user: {
+        id: user.id,
         name: user.name,
         email: user.email,
       },
@@ -55,6 +56,7 @@ exports.register = async (req, res) => {
     );
     res.status(201).json({
       user: {
+        id: user.id,
         name: user.name,
         email: user.email,
       },

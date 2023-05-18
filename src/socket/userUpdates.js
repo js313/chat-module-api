@@ -1,30 +1,44 @@
-const { Users } = require("../config/db");
+const { Users, Conversations, Op } = require("../config/db");
 const { connectedUsers } = require("./store");
 
-const updateOnlineUsers = async (io) => {
+const getConversationList = async (socket, io) => {
   try {
-    const users = await getUsersList();
-    io.emit("usersList", users);
+    console.log(socket.user.id);
+    let conversations = await Conversations.findAll({
+      where: {
+        [Op.or]: [
+          { receiver_id: socket.user.id },
+          { sender_id: socket.user.id },
+        ],
+      },
+      include: [
+        { model: Users, as: "sender", attributes: { exclude: ["password"] } },
+        { model: Users, as: "receiver", attributes: { exclude: ["password"] } },
+      ],
+    });
+    let newData = [];
+    conversations = conversations.map((data) => {
+      data = data.get({ plain: true });
+      if (data.sender_id !== socket.user.id) {
+        data.userdata = data.sender;
+      }
+
+      if (data.receiver_id !== socket.user.id) {
+        data.userdata = data.receiver;
+      }
+      delete data.receiver;
+      delete data.sender;
+      if (connectedUsers.has(data.userdata.id)) {
+        data.userdata.online = true;
+      } else {
+        data.userdata.online = false;
+      }
+      newData.push(data);
+    });
+    socket.emit("conversationList", newData);
   } catch (error) {
     console.log(error);
   }
 };
 
-const getUsersList = async () => {
-  try {
-    let users = await Users.findAll({
-      attributes: { exclude: ["password"] },
-    });
-    users = users.map((user) => {
-      return {
-        ...user.dataValues,
-        online: connectedUsers.has(user.id) ? true : false,
-      };
-    });
-    return users;
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-module.exports = { updateOnlineUsers };
+module.exports = { getConversationList };
