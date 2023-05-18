@@ -19,7 +19,7 @@ const getGroupList = async (socket, io) => {
         return group.get({ plain: true });
       })
     );
-    io.emit("groupList", groups);
+    io.to(socket.id).emit("groupList", groups);
   } catch (error) {
     console.log(error);
   }

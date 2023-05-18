@@ -3,7 +3,6 @@ const { connectedUsers } = require("./store");
 
 const getConversationList = async (socket, io) => {
   try {
-    console.log(socket.user.id);
     let conversations = await Conversations.findAll({
       where: {
         [Op.or]: [
