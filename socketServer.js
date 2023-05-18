@@ -1,8 +1,8 @@
 const socketIO = require("socket.io");
 const authSocket = require("./src/middlewares/authSocket");
 const { addUserToStore, removeUserFromStore } = require("./src/socket/store");
-const { updateOnlineUsers } = require("./src/socket/userUpdates");
-const { updateOnlineGroups } = require("./src/socket/groupUpdates");
+const { getConversationList } = require("./src/socket/userUpdates");
+const { getGroupList } = require("./src/socket/groupUpdates");
 const { getAllMessage } = require("./src/socket/messageUpdates");
 
 let io = null;
@@ -20,18 +20,15 @@ const registerSocketServer = (server) => {
   io.on("connection", async (socket) => {
     console.log("New client connected: " + socket.id);
     addUserToStore(socket.user.id, socket.id);
-    updateOnlineUsers(io);
-    updateOnlineGroups(socket, io);
+    getConversationList(socket, io);
+    getGroupList(socket, io);
     socket.on("messages", async (data) => {
       let message = await getAllMessage(socket, data);
       io.to(socket.id).emit("messages", message);
     });
-    socket.on("test", (data) => {
-      io.to(socket.id).emit("test", { msg: "pong" });
-    });
     socket.on("disconnect", async () => {
       removeUserFromStore(socket.user.id, socket.id);
-      updateOnlineUsers(io);
+      getConversationList(socket, io);
       console.log("Client disconnected");
     });
   });

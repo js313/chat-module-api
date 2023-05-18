@@ -1,15 +1,6 @@
 const { Groups, Members, Users } = require("../config/db");
 
-const updateOnlineGroups = async (socket, io) => {
-  try {
-    const groupsList = await getGroupList(socket);
-    io.emit("groupList", groupsList);
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-const getGroupList = async (socket) => {
+const getGroupList = async (socket, io) => {
   try {
     const members = await Members.findAll({
       where: { user_id: socket.user.id },
@@ -28,10 +19,10 @@ const getGroupList = async (socket) => {
         return group.get({ plain: true });
       })
     );
-    return groups;
+    io.emit("groupList", groups);
   } catch (error) {
-    throw new Error(error);
+    console.log(error);
   }
 };
 
-module.exports = { updateOnlineGroups };
+module.exports = { getGroupList };
