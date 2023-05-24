@@ -1,5 +1,5 @@
 const db = require("../../config/db");
-const { Members } = db;
+const { Members, Groups, Users } = db;
 const message = require("../../utils/responseMessage");
 
 exports.findAll = async (req, res) => {
@@ -110,3 +110,56 @@ exports.destroy = async (req, res) => {
     });
   }
 };
+
+// exports.joinGroup = async (req, res) => {
+//   try {
+//     const { link } = req.body;
+
+//     const group = await Groups.findOne({
+//       where: {
+//         link: {
+//           [Op.eq]: link,
+//         },
+//       },
+//     });
+//     console.log("group", group);
+//     if (!group) {
+//       return res.status(404).json({
+//         status: 404,
+//         message: "Group not found",
+//       });
+//     }
+
+//     const existingMember = await Members.findOne({
+//       where: {
+//         group_id: group.id,
+//         user_id: req.user.id,
+//       },
+//     });
+
+//     if (existingMember) {
+//       return res.status(400).json({
+//         status: 400,
+//         message: "You are already a member of this group",
+//       });
+//     }
+
+//     const member = await Members.create({
+//       group_id: group.id,
+//       user_id: req.user.id,
+//       joined_at: new Date(),
+//     });
+
+//     res.status(200).json({
+//       status: 200,
+//       data: member,
+//       message: "Successfully joined the group",
+//     });
+//   } catch (error) {
+//     res.status(500).send({
+//       status: 500,
+//       message: "Failed to join the group",
+//       error: error.message,
+//     });
+//   }
+// };

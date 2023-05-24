@@ -9,7 +9,6 @@ const verifySocketToken = (socket, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
     const { id, email } = decoded;
-    console.log(decoded);
     if (!id || !email) {
       return next(new Error("Authentication error"));
     }

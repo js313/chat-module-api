@@ -1,4 +1,5 @@
-const { Messages, Conversations, Members } = require("../config/db");
+const { Messages, Conversations, Members, Groups } = require("../config/db");
+const { connectedUsers } = require("./store");
 
 const getAllMessage = async (socket, data) => {
   try {
@@ -25,7 +26,6 @@ const getAllMessage = async (socket, data) => {
     if (Object.keys(query).length === 0) {
       return [];
     }
-    console.log(query);
     const messages = await Messages.findAll({ where: query });
     if (!messages) {
       throw new Error("Message not found");
@@ -36,4 +36,48 @@ const getAllMessage = async (socket, data) => {
   }
 };
 
-module.exports = { getAllMessage };
+const sendMessage = async (socket, io, data) => {
+  try {
+    const { conversation_id, group_id, text } = data;
+    if (conversation_id && group_id) {
+      throw new Error("error");
+    }
+    let conversation;
+    let members;
+    if (conversation_id) {
+      conversation = await Conversations.findByPk(conversation_id);
+    } else {
+      members = await Members.findAll({
+        where: { group_id: group_id },
+      });
+    }
+    if (!conversation && members?.length === 0) {
+      throw new Error("not found");
+    }
+
+    let receiverIds = [];
+    await Messages.create({
+      conversation_id,
+      group_id,
+      text,
+      sender_id: socket.user.id,
+    });
+    if (conversation) {
+      receiverIds = connectedUsers.get(conversation.receiver_id) || [];
+    } else {
+      receiverIds = [
+        ...receiverIds,
+        ...members.map((member) => {
+          return connectedUsers.get(member.user_id) || [];
+        }),
+      ];
+    }
+
+    const senderIds = connectedUsers.get(socket.user.id) || [];
+    return [...receiverIds, ...senderIds];
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+module.exports = { getAllMessage, sendMessage };

@@ -4,10 +4,17 @@ const controller = require("./controller");
 const passport = require("../../middlewares/passport");
 
 router.get(
+  "/link",
+  passport.authenticate("jwt", { session: false }),
+  controller.getGroupByLink
+);
+
+router.get(
   "/",
   passport.authenticate("jwt", { session: false }),
   controller.findAll
 );
+
 router.get(
   "/:id",
   passport.authenticate("jwt", { session: false }),

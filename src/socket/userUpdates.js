@@ -1,3 +1,4 @@
+const { v4 } = require("uuid");
 const { Users, Conversations, Op } = require("../config/db");
 const { connectedUsers } = require("./store");
 
@@ -58,6 +59,7 @@ const getConversationList = async (socket, io) => {
       }
       return conversation;
     });
+
     emitToOtherSockets.forEach((socketId) => {
       io.to(socketId).emit("conversationList", conversations);
     });
@@ -66,4 +68,31 @@ const getConversationList = async (socket, io) => {
   }
 };
 
-module.exports = { getConversationList };
+const createConversation = async (socket, io, data) => {
+  try {
+    const { receiver_id } = data;
+    const sender = await Users.findOne({ where: { id: socket.user.id } });
+    if (!sender) {
+      throw new Error("Sender not found");
+    }
+    const receiver = await Users.findOne({ where: { id: receiver_id } });
+    if (!receiver) {
+      throw new Error("Receiver not found");
+    }
+    const getConversation = await Conversations.findAll({
+      where: { sender_id: receiver_id, receiver_id: socket.user.id },
+    });
+
+    // if (!getConversation) {
+    const conversation = await Conversations.create({
+      sender_id: socket.user.id,
+      receiver_id: receiver_id,
+    });
+    return conversation;
+    // }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+module.exports = { getConversationList, createConversation };

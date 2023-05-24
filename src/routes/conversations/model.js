@@ -40,6 +40,12 @@ module.exports = function (sequelize, DataTypes) {
     {
       tableName: "conversations",
       timestamps: false,
+      indexes: [
+        {
+          unique: true,
+          fields: ["sender_id", "receiver_id"],
+        },
+      ],
     }
   );
 };

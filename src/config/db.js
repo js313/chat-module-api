@@ -7,6 +7,7 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST,
     dialect: process.env.DB_TYPE,
+    logging: false,
   }
 );
 
@@ -116,6 +117,32 @@ db.Groups.belongsToMany(db.Users, {
   foreignKey: "group_id",
   otherKey: "user_id",
 });
+
+//Hooks
+const validateConversationUnique = async (conversation) => {
+  const { sender_id, receiver_id } = conversation;
+
+  const existingConversation = await db.Conversations.findOne({
+    where: {
+      [Sequelize.Op.or]: [
+        { sender_id, receiver_id },
+        { sender_id: receiver_id, receiver_id: sender_id },
+      ],
+    },
+  });
+
+  if (existingConversation) {
+    throw new Error(
+      "Conversation with the same sender and receiver already exists."
+    );
+  }
+};
+
+db.Conversations.addHook(
+  "beforeCreate",
+  "validateUnique",
+  validateConversationUnique
+);
 
 sequelize.sync({ force: false }).then(() => {
   console.log("yes re-sync done!");

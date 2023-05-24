@@ -1,6 +1,7 @@
 const db = require("../../config/db");
-const { Groups } = db;
+const { Groups, Users } = db;
 const message = require("../../utils/responseMessage");
+const { uuid } = require("uuidv4");
 
 exports.findAll = async (req, res) => {
   try {
@@ -45,7 +46,18 @@ exports.findByPk = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const group = await Groups.create(req.body);
+    const { name } = req.body;
+    const link = `http://localhost:3000/chat/group/${uuid()}`;
+
+    const group = await Groups.create({
+      created_by: req.user.id,
+      name,
+      link,
+    });
+    await db.Members.create({
+      group_id: group.id,
+      user_id: req.user.id,
+    });
     res.status(201).json({
       status: 201,
       data: group,
@@ -105,6 +117,28 @@ exports.destroy = async (req, res) => {
       status: 500,
       message: message.error.remove("groups"),
       error: error.message,
+    });
+  }
+};
+
+exports.getGroupByLink = async (req, res) => {
+  try {
+    const { link } = req.query;
+
+    const user = await Users.findOne({ where: { id: req.user.id } });
+    if (!user) {
+      return res.status(404).json("User not found");
+    }
+    const group = await Groups.findOne({ where: { link: link } });
+    if (!group) {
+      return res.status(404).json("There is no group with this link");
+    } else {
+      return res.status(201).json(group);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      error,
     });
   }
 };
