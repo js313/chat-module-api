@@ -14,7 +14,11 @@ const {
   createGroup,
   addMemberInGroup,
 } = require("./src/socket/groupUpdates");
-const { getAllMessage, sendMessage } = require("./src/socket/messageUpdates");
+const {
+  getAllMessage,
+  sendMessage,
+  deleteMessage,
+} = require("./src/socket/messageUpdates");
 
 let io = null;
 
@@ -57,6 +61,9 @@ const registerSocketServer = (server) => {
     socket.on("messages", async (data) => {
       let message = await getAllMessage(socket, data);
       io.to(socket.id).emit("messages", message);
+    });
+    socket.on("deleteMessage", async (data) => {
+      await deleteMessage(socket, io, data);
     });
     socket.on("createGroup", async (data) => {
       let group = await createGroup(socket, io, data);

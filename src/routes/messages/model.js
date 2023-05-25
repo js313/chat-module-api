@@ -19,7 +19,7 @@ module.exports = function (sequelize, DataTypes) {
         allowNull: true,
       },
       hidden: {
-        type: DataTypes.VIRTUAL(DataTypes.BOOLEAN),
+        type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
       sender_id: {

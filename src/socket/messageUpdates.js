@@ -1,4 +1,10 @@
-const { Messages, Conversations, Members, Groups } = require("../config/db");
+const {
+  Messages,
+  Conversations,
+  Members,
+  Groups,
+  Users,
+} = require("../config/db");
 const { connectedUsers } = require("./store");
 
 const getAllMessage = async (socket, data) => {
@@ -80,4 +86,31 @@ const sendMessage = async (socket, io, data) => {
   }
 };
 
-module.exports = { getAllMessage, sendMessage };
+const deleteMessage = async (socket, io, data) => {
+  const { message_id } = data;
+  try {
+    const user = await Users.findOne({
+      where: { id: socket.user.id },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+    const message = await Messages.findOne({
+      where: { id: message_id, sender_id: socket.user.id },
+    });
+
+    await message.update({
+      hidden: true,
+    });
+    let allMessages = await getAllMessage(socket, {
+      conversation_id: message.conversation_id,
+      group_id: message.group_id,
+    });
+    io.to(socket.id).emit("messages", allMessages);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+module.exports = { getAllMessage, sendMessage, deleteMessage };

@@ -59,7 +59,6 @@ const getGroups = async (userId, io) => {
 const addMemberInGroup = async (socket, io, data) => {
   try {
     const { user_id, group_id } = data;
-    console.log(data);
 
     const group = await Groups.findOne({
       where: { id: group_id },
