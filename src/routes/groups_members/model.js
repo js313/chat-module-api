@@ -26,6 +26,10 @@ module.exports = function (sequelize, DataTypes) {
           key: "id",
         },
       },
+      muted: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
       joined_at: {
         type: DataTypes.DATE,
         allowNull: false,

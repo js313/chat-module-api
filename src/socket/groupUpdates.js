@@ -1,4 +1,4 @@
-const { Groups, Members, Users } = require("../config/db");
+const { Groups, Members, Users, Messages } = require("../config/db");
 const { connectedUsers } = require("./store");
 const { v4 } = require("uuid");
 
@@ -116,7 +116,7 @@ const joinGroupWithLink = async (socket, io, data) => {
 const createGroup = async (socket, io, data) => {
   try {
     const { name, members } = data;
-    const link = `http://localhost:3000/chat/group/${v4()}`;
+    const link = `http://192.168.1.203:3000/chat/group/${v4()}`;
     const group = await Groups.create({
       created_by: socket.user.id,
       name,
@@ -138,9 +138,57 @@ const createGroup = async (socket, io, data) => {
   }
 };
 
+const updateGroup = async (socket, io, data) => {
+  const { group_id, name } = data;
+  try {
+    const group = await Groups.findOne({
+      where: { id: group_id, created_by: socket.user.id },
+    });
+    if (!group) {
+      throw new Error("Group not found or you are not group admin");
+    } else {
+      await group.update({
+        name: name,
+      });
+    }
+    const members = await Members.findAll({
+      where: { group_id: group_id },
+    });
+    members.forEach((member) => {
+      getGroups(member.user_id, io);
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const deleteGroup = async (socket, data) => {
+  const { group_id } = data;
+  try {
+    const group = await Groups.findOne({
+      where: { id: group_id, created_by: socket.user.id },
+    });
+    if (!group) {
+      throw new Error("Group not found or you are not group admin");
+    }
+    await Messages.destroy({
+      where: { group_id: group_id },
+    });
+    await Members.destroy({
+      where: { group_id: group_id },
+    });
+    await group.destroy();
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 module.exports = {
   getGroupList,
   addMemberInGroup,
   joinGroupWithLink,
   createGroup,
+  getGroups,
+  updateGroup,
+  deleteGroup,
 };

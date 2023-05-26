@@ -1,5 +1,5 @@
 const db = require("../../config/db");
-const { Groups, Users } = db;
+const { Groups, Users, Members } = db;
 const message = require("../../utils/responseMessage");
 const { uuid } = require("uuidv4");
 
@@ -21,26 +21,25 @@ exports.findAll = async (req, res) => {
 };
 
 exports.findByPk = async (req, res) => {
+  const { id } = req.params;
   try {
-    const group = await Groups.findByPk(req.params.id);
-    if (!group) {
-      res.status(404).send({
-        status: 404,
-        message: message.error.get("groups"),
-      });
-    } else {
-      res.json({
-        status: 200,
-        data: group,
-        message: message.success.get("groups"),
-      });
-    }
-  } catch (error) {
-    res.status(500).send({
-      status: 500,
-      message: message.error.get("groups"),
-      error: error.message,
+    const group = await Groups.findByPk(id, {
+      include: {
+        model: Users,
+        through: Members,
+        attributes: {
+          exclude: ["password", "created_at", "updated_at"],
+        },
+      },
     });
+
+    if (!group) {
+      return res.status(404).json({ error: "Group not found" });
+    }
+
+    return res.status(200).json(group);
+  } catch (error) {
+    console.log(error);
   }
 };
 

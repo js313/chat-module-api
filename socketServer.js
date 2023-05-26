@@ -8,17 +8,22 @@ const {
 const {
   getConversationList,
   createConversation,
+  deleteConversation,
 } = require("./src/socket/userUpdates");
 const {
   getGroupList,
   createGroup,
   addMemberInGroup,
+  updateGroup,
+  deleteGroup,
 } = require("./src/socket/groupUpdates");
 const {
   getAllMessage,
   sendMessage,
   deleteMessage,
+  updateMessage,
 } = require("./src/socket/messageUpdates");
+const { blockUser, unblockUser } = require("./src/socket/blockUpdates");
 
 let io = null;
 
@@ -65,6 +70,18 @@ const registerSocketServer = (server) => {
     socket.on("deleteMessage", async (data) => {
       await deleteMessage(socket, io, data);
     });
+    socket.on("updateMessage", async (data) => {
+      await updateMessage(socket, io, data);
+    });
+    socket.on("deleteConversation", async (data) => {
+      await deleteConversation(socket, io, data);
+    });
+    socket.on("blockUser", async (data) => {
+      await blockUser(socket, io, data);
+    });
+    socket.on("unBlockUser", async (data) => {
+      await unblockUser(socket, io, data);
+    });
     socket.on("createGroup", async (data) => {
       let group = await createGroup(socket, io, data);
       io.to(socket.id).emit("createGroup", group);
@@ -74,13 +91,19 @@ const registerSocketServer = (server) => {
         console.log(error);
       }
     });
+    socket.on("updateGroup", async (data) => {
+      await updateGroup(socket, io, data);
+    });
+    socket.on("deleteGroup", async (data) => {
+      await deleteGroup(socket, io, data);
+    });
 
     socket.on("sendMessage", async (data) => {
       let socketIds = await sendMessage(socket, io, data);
-      let message = await getAllMessage(socket, data);
-      socketIds.forEach((id) => {
-        io.to(id).emit("messages", message);
-      });
+      // let message = await getAllMessage(socket, data);
+      // socketIds.forEach((id) => {
+      //   io.to(id).emit("messages", message);
+      // });
     });
     socket.on("disconnect", async () => {
       removeUserFromStore(socket.user.id, socket.id);

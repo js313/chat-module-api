@@ -1,5 +1,5 @@
 const { v4 } = require("uuid");
-const { Users, Conversations, Op } = require("../config/db");
+const { Users, Conversations, Op, Messages } = require("../config/db");
 const { connectedUsers } = require("./store");
 
 const getConversationList = async (socket, io) => {
@@ -95,4 +95,42 @@ const createConversation = async (socket, io, data) => {
   }
 };
 
-module.exports = { getConversationList, createConversation };
+const deleteConversation = async (socket, io, data) => {
+  const { conversation_id } = data;
+  try {
+    const user = await Users.findOne({
+      where: { id: socket.user.id },
+    });
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const conversation = await Conversations.findOne({
+      where: {
+        id: conversation_id,
+        [Op.or]: [
+          { receiver_id: socket.user.id },
+          { sender_id: socket.user.id },
+        ],
+      },
+    });
+
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
+
+    await Messages.destroy({
+      where: { conversation_id: conversation.id },
+    });
+
+    await conversation.destroy();
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+module.exports = {
+  getConversationList,
+  createConversation,
+  deleteConversation,
+};

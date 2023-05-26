@@ -4,7 +4,9 @@ const {
   Members,
   Groups,
   Users,
+  sequelize,
 } = require("../config/db");
+const { broadcastToConversation, broadcastToGroup } = require("./broadcast");
 const { connectedUsers } = require("./store");
 
 const getAllMessage = async (socket, data) => {
@@ -32,7 +34,24 @@ const getAllMessage = async (socket, data) => {
     if (Object.keys(query).length === 0) {
       return [];
     }
-    const messages = await Messages.findAll({ where: query });
+    const messages = await Messages.findAll({
+      where: query,
+      attributes: [
+        "id",
+        "file",
+        "hidden",
+        "sender_id",
+        "conversation_id",
+        "group_id",
+        "created_at",
+        "updated_at",
+        [
+          sequelize.literal("CASE WHEN hidden = true THEN NULL ELSE text END"),
+          "text",
+        ],
+      ],
+    });
+
     if (!messages) {
       throw new Error("Message not found");
     }
@@ -47,6 +66,15 @@ const sendMessage = async (socket, io, data) => {
     const { conversation_id, group_id, text } = data;
     if (conversation_id && group_id) {
       throw new Error("error");
+    }
+    let checkBlockUser;
+    if (group_id) {
+      checkBlockUser = await Members.findOne({
+        where: { group_id: group_id, user_id: socket.user.id, muted: true },
+      });
+    }
+    if (checkBlockUser) {
+      throw new Error("You are blocked in this group, you can't send messages");
     }
     let conversation;
     let members;
@@ -68,19 +96,56 @@ const sendMessage = async (socket, io, data) => {
       text,
       sender_id: socket.user.id,
     });
+    let allMessages = await getAllMessage(socket, {
+      conversation_id: conversation_id,
+      group_id: group_id,
+    });
     if (conversation) {
-      receiverIds = connectedUsers.get(conversation.receiver_id) || [];
+      broadcastToConversation(io, allMessages, "messages", conversation_id);
     } else {
-      receiverIds = [
-        ...receiverIds,
-        ...members.map((member) => {
-          return connectedUsers.get(member.user_id) || [];
-        }),
-      ];
+      broadcastToGroup(io, allMessages, "messages", group_id);
     }
 
     const senderIds = connectedUsers.get(socket.user.id) || [];
     return [...receiverIds, ...senderIds];
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const updateMessage = async (socket, io, data) => {
+  const { message_id, text } = data;
+  try {
+    const user = await Users.findOne({
+      where: { id: socket.user.id },
+    });
+    if (!user) {
+      throw new Error("User not found");
+    }
+    const message = await Messages.findOne({
+      where: { id: message_id, sender_id: socket.user.id },
+    });
+
+    if (!message) {
+      return;
+    }
+    await message.update({
+      text: text,
+    });
+    let allMessages = await getAllMessage(socket, {
+      conversation_id: message.conversation_id,
+      group_id: message.group_id,
+    });
+    if (message.conversation_id) {
+      broadcastToConversation(
+        io,
+        allMessages,
+        "messages",
+        message.conversation_id
+      );
+    } else {
+      broadcastToGroup(io, allMessages, "messages", message.group_id);
+    }
   } catch (error) {
     console.log(error);
   }
@@ -99,7 +164,9 @@ const deleteMessage = async (socket, io, data) => {
     const message = await Messages.findOne({
       where: { id: message_id, sender_id: socket.user.id },
     });
-
+    if (!message) {
+      return;
+    }
     await message.update({
       hidden: true,
     });
@@ -107,10 +174,19 @@ const deleteMessage = async (socket, io, data) => {
       conversation_id: message.conversation_id,
       group_id: message.group_id,
     });
-    io.to(socket.id).emit("messages", allMessages);
+    if (message.conversation_id) {
+      broadcastToConversation(
+        io,
+        allMessages,
+        "messages",
+        message.conversation_id
+      );
+    } else {
+      broadcastToGroup(io, allMessages, "messages", message.group_id);
+    }
   } catch (error) {
     console.log(error);
   }
 };
 
-module.exports = { getAllMessage, sendMessage, deleteMessage };
+module.exports = { getAllMessage, sendMessage, updateMessage, deleteMessage };
