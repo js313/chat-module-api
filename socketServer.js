@@ -24,6 +24,10 @@ const {
   updateMessage,
 } = require("./src/socket/messageUpdates");
 const { blockUser, unblockUser } = require("./src/socket/blockUpdates");
+const {
+  getGroupMembers,
+  updateMembers,
+} = require("./src/socket/memberUpdates");
 
 let io = null;
 
@@ -61,6 +65,13 @@ const registerSocketServer = (server) => {
     });
     socket.on("addMember", async (data) => {
       await addMemberInGroup(socket, io, data);
+      socket.emit("groupList");
+    });
+    socket.on("memberList", async (data) => {
+      await getGroupMembers(socket, io, data);
+    });
+    socket.on("updateMember", async (data) => {
+      await updateMembers(socket, io, data);
       socket.emit("groupList");
     });
     socket.on("messages", async (data) => {

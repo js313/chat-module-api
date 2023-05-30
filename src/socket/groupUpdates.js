@@ -162,7 +162,7 @@ const updateGroup = async (socket, io, data) => {
   }
 };
 
-const deleteGroup = async (socket, data) => {
+const deleteGroup = async (socket, io, data) => {
   const { group_id } = data;
   try {
     const group = await Groups.findOne({
