@@ -22,6 +22,7 @@ const {
   sendMessage,
   deleteMessage,
   updateMessage,
+  forwardMessage,
 } = require("./src/socket/messageUpdates");
 const { blockUser, unblockUser } = require("./src/socket/blockUpdates");
 const {
@@ -30,6 +31,7 @@ const {
 } = require("./src/socket/memberUpdates");
 
 let io = null;
+let socket = null;
 
 const registerSocketServer = (server) => {
   io = socketIO(server, {
@@ -41,7 +43,8 @@ const registerSocketServer = (server) => {
   io.use((socket, next) => {
     authSocket(socket, next);
   });
-  io.on("connection", async (socket) => {
+  io.on("connection", async (s) => {
+    socket = s;
     console.log("New client connected: " + socket.id);
     addUserToStore(socket.user.id, socket.id);
     getConversationList(socket, io);
@@ -116,6 +119,10 @@ const registerSocketServer = (server) => {
       //   io.to(id).emit("messages", message);
       // });
     });
+    socket.on("forwardMessage", async (data) => {
+      await forwardMessage(socket, io, data);
+    });
+
     socket.on("disconnect", async () => {
       removeUserFromStore(socket.user.id, socket.id);
       getConversationList(socket, io);
@@ -124,4 +131,10 @@ const registerSocketServer = (server) => {
   });
 };
 
-module.exports = { registerSocketServer };
+const sendMessageSocket = async (data) => {
+  if (socket) {
+    await sendMessage(socket, io, data);
+  }
+};
+
+module.exports = { registerSocketServer, sendMessageSocket };

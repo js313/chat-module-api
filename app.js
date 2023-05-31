@@ -9,6 +9,8 @@ var indexRouter = require("./src/routes/index.js").routes;
 var app = express();
 app.use(cors("*"));
 app.use(logger("dev"));
+app.use("/uploads", express.static(__dirname + "/uploads"));
+
 // app.use(express.static('static'))
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());

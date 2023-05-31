@@ -1,3 +1,4 @@
+const { sendMessageSocket } = require("../../../socketServer");
 const db = require("../../config/db");
 const { Messages } = db;
 const rmessage = require("../../utils/responseMessage");
@@ -70,19 +71,21 @@ exports.findByPk = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
+  const data = req.body;
   try {
-    const message = await Messages.create(req.body);
-    res.status(201).json({
-      status: 201,
-      data: message,
-      message: rmessage.success.create("messages"),
-    });
+    data.files = req.files;
+    data.req = req;
+    await sendMessageSocket(data);
+    res.status(201).json({ message: "message send successfully" });
   } catch (error) {
-    res.status(500).send({
-      status: 500,
-      message: rmessage.error.create("messages"),
-      error: error.message,
-    });
+    console.log(error);
+    if (error.message === "File type is not supported") {
+      return res.status(400).json({
+        message: "Error Message",
+        error: "File type is not supported",
+      });
+    }
+    return res.status(500).json(error);
   }
 };
 

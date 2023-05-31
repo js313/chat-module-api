@@ -43,6 +43,11 @@ db.Groups = require("../routes/groups/model.js")(sequelize, Sequelize);
 
 db.Members = require("../routes/groups_members/model.js")(sequelize, Sequelize);
 
+db.UnseenMessages = require("../routes/unseen_messages/model.js")(
+  sequelize,
+  Sequelize
+);
+
 // relations
 
 //Conversations
@@ -116,6 +121,24 @@ db.Groups.belongsToMany(db.Users, {
   through: db.Members,
   foreignKey: "group_id",
   otherKey: "user_id",
+});
+
+db.UnseenMessages.belongsTo(db.Users, { foreignKey: "user_id", as: "user" });
+db.UnseenMessages.belongsTo(db.Messages, {
+  foreignKey: "message_id",
+  as: "message",
+});
+
+db.Users.belongsToMany(db.Messages, {
+  through: db.UnseenMessages,
+  foreignKey: "message_id",
+  otherKey: "user_id",
+});
+
+db.Messages.belongsToMany(db.Users, {
+  through: db.UnseenMessages,
+  foreignKey: "user_id",
+  otherKey: "message_id",
 });
 
 //Hooks

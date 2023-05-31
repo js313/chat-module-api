@@ -12,11 +12,18 @@ module.exports = function (sequelize, DataTypes) {
       },
       text: {
         type: DataTypes.TEXT("medium"),
-        allowNull: false,
-      },
-      file: {
-        type: DataTypes.STRING(255),
         allowNull: true,
+      },
+      files: {
+        type: DataTypes.TEXT("long"),
+        allowNull: true,
+        get() {
+          const files = this.getDataValue("files");
+          return files ? files.split(",") : [];
+        },
+        set(value) {
+          this.setDataValue("files", value.join(","));
+        },
       },
       hidden: {
         type: DataTypes.BOOLEAN,
