@@ -29,6 +29,10 @@ const {
   getGroupMembers,
   updateMembers,
 } = require("./src/socket/memberUpdates");
+const {
+  getUnseenMessages,
+  deleteUnseenMessages,
+} = require("./src/socket/unseenMessageUpdates");
 
 let io = null;
 let socket = null;
@@ -121,6 +125,12 @@ const registerSocketServer = (server) => {
     });
     socket.on("forwardMessage", async (data) => {
       await forwardMessage(socket, io, data);
+    });
+    socket.on("getUnseenMessages", async (data) => {
+      await getUnseenMessages(socket, io, data);
+    });
+    socket.on("deleteUnseenMessages", async (data) => {
+      await deleteUnseenMessages(socket, io, data);
     });
 
     socket.on("disconnect", async () => {
