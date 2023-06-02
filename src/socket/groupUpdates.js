@@ -1,4 +1,5 @@
 const { Groups, Members, Users, Messages } = require("../config/db");
+const { broadcastToGroup, broadcastToUser } = require("./broadcast");
 const { connectedUsers } = require("./store");
 const { v4 } = require("uuid");
 
@@ -132,6 +133,29 @@ const createGroup = async (socket, io, data) => {
         group_id: group.id,
       });
     });
+    members.push(socket.user.id);
+    members.map(async (member) => {
+      const membersList = await Members.findAll({
+        where: { user_id: member },
+      });
+
+      const groups = await Promise.all(
+        membersList.map(async (element) => {
+          const group = await Groups.findByPk(element.group_id, {
+            include: {
+              model: Users,
+              through: Members,
+              attributes: {
+                exclude: ["password", "created_at", "updated_at"],
+              },
+            },
+          });
+          return group.get({ plain: true });
+        })
+      );
+      broadcastToGroup(io, groups, "groupList", group.id);
+    });
+
     return { group: group, members: members };
   } catch (error) {
     console.log(error);
@@ -164,6 +188,7 @@ const updateGroup = async (socket, io, data) => {
 
 const deleteGroup = async (socket, io, data) => {
   const { group_id } = data;
+  console.log("group_id", group_id);
   try {
     const group = await Groups.findOne({
       where: { id: group_id, created_by: socket.user.id },
@@ -174,10 +199,37 @@ const deleteGroup = async (socket, io, data) => {
     await Messages.destroy({
       where: { group_id: group_id },
     });
+
+    const memberList = await Members.findAll({ where: { group_id: group_id } });
+
     await Members.destroy({
       where: { group_id: group_id },
     });
     await group.destroy();
+
+    for (let index = 0; index < memberList.length; index++) {
+      const element = memberList[index];
+      const members = await Members.findAll({
+        where: { user_id: element.user_id },
+      });
+      // let group_id;
+      const groups = await Promise.all(
+        members.map(async (element) => {
+          const group = await Groups.findByPk(element.group_id, {
+            include: {
+              model: Users,
+              through: Members,
+              attributes: {
+                exclude: ["password", "created_at", "updated_at"],
+              },
+            },
+          });
+          group_id = element.group_id;
+          return group.get({ plain: true });
+        })
+      );
+      broadcastToGroup(io, groups, "groupList", group_id);
+    }
   } catch (error) {
     console.log(error);
   }

@@ -35,7 +35,6 @@ const {
 } = require("./src/socket/unseenMessageUpdates");
 
 let io = null;
-let socket = null;
 
 const registerSocketServer = (server) => {
   io = socketIO(server, {
@@ -47,8 +46,7 @@ const registerSocketServer = (server) => {
   io.use((socket, next) => {
     authSocket(socket, next);
   });
-  io.on("connection", async (s) => {
-    socket = s;
+  io.on("connection", async (socket) => {
     console.log("New client connected: " + socket.id);
     addUserToStore(socket.user.id, socket.id);
     getConversationList(socket, io);
@@ -102,18 +100,20 @@ const registerSocketServer = (server) => {
     });
     socket.on("createGroup", async (data) => {
       let group = await createGroup(socket, io, data);
-      io.to(socket.id).emit("createGroup", group);
-      try {
-        await getGroupList(socket, io);
-      } catch (error) {
-        console.log(error);
-      }
+      // io.to(socket.id).emit("createGroup", group);
+      // try {
+      //   await getGroupList(socket, io);
+      // } catch (error) {
+      //   console.log(error);
+      // }
     });
     socket.on("updateGroup", async (data) => {
       await updateGroup(socket, io, data);
+      await getGroupList(socket, io);
     });
     socket.on("deleteGroup", async (data) => {
       await deleteGroup(socket, io, data);
+      await getGroupList(socket, io);
     });
 
     socket.on("sendMessage", async (data) => {
@@ -136,15 +136,14 @@ const registerSocketServer = (server) => {
     socket.on("disconnect", async () => {
       removeUserFromStore(socket.user.id, socket.id);
       getConversationList(socket, io);
+      console.log("connected", connectedUsers);
       console.log("Client disconnected");
     });
   });
 };
 
-const sendMessageSocket = async (data) => {
-  if (socket) {
-    await sendMessage(socket, io, data);
-  }
+const sendMessageSocket = async (data, req) => {
+  await sendMessage(req, io, data);
 };
 
 module.exports = { registerSocketServer, sendMessageSocket };

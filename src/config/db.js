@@ -65,7 +65,7 @@ db.Users.hasMany(db.Conversations, {
   as: "user2_conversations",
 });
 
-//Messages
+//Messages000000000
 db.Messages.belongsTo(db.Users, {
   foreignKey: "sender_id",
   as: "sender",
@@ -109,7 +109,9 @@ db.BlockedUsers.belongsTo(db.Users, {
 
 //Members
 db.Members.belongsTo(db.Groups, { foreignKey: "group_id", as: "group" });
-db.Members.belongsTo(db.Users, { foreignKey: "user_id", as: "member" });
+db.Members.belongsTo(db.Users, { foreignKey: "user_id", as: "Users" });
+db.Groups.hasMany(db.Members, { foreignKey: "group_id", as: "groups" });
+db.Users.hasMany(db.Members, { foreignKey: "user_id", as: "Users" });
 db.Users.belongsToMany(db.Groups, {
   //these create a unique index, such that same combination of user_id and group_id does not exist
   through: db.Members,
@@ -127,19 +129,21 @@ db.UnseenMessages.belongsTo(db.Users, { foreignKey: "user_id", as: "user" });
 db.UnseenMessages.belongsTo(db.Messages, {
   foreignKey: "message_id",
   as: "message",
+  onDelete: "CASCADE",
 });
 
-db.Users.belongsToMany(db.Messages, {
-  through: db.UnseenMessages,
-  foreignKey: "message_id",
-  otherKey: "user_id",
-});
+// db.Users.belongsToMany(db.Messages, {
+//   through: db.UnseenMessages,
+//   foreignKey: "user_id",
+//   otherKey: "message_id",
+//   onDelete: "CASCADE",
+// });
 
-db.Messages.belongsToMany(db.Users, {
-  through: db.UnseenMessages,
-  foreignKey: "user_id",
-  otherKey: "message_id",
-});
+// db.Messages.belongsToMany(db.Users, {
+//   through: db.UnseenMessages,
+//   foreignKey: "message_id",
+//   otherKey: "user_id",
+// });
 
 //Hooks
 const validateConversationUnique = async (conversation) => {

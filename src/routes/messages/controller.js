@@ -75,7 +75,7 @@ exports.create = async (req, res) => {
   try {
     data.files = req.files;
     data.req = req;
-    await sendMessageSocket(data);
+    await sendMessageSocket(data, req);
     res.status(201).json({ message: "message send successfully" });
   } catch (error) {
     console.log(error);
