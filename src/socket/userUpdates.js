@@ -2,67 +2,59 @@ const { v4 } = require("uuid");
 const { Users, Conversations, Op, Messages } = require("../config/db");
 const { connectedUsers } = require("./store");
 
+const getList = async (userId) => {
+  let conversations = await Conversations.findAll({
+    where: {
+      [Op.or]: [{ receiver_id: userId }, { sender_id: userId }],
+    },
+    include: [
+      { model: Users, as: "sender", attributes: { exclude: ["password"] } },
+      { model: Users, as: "receiver", attributes: { exclude: ["password"] } },
+    ],
+  });
+
+  conversations = conversations.map((element) => {
+    let conversation = element.get({ plain: true });
+    if (conversation.sender_id === userId) {
+      conversation.user = conversation.receiver;
+      conversation.user2 = conversation.sender;
+    } else {
+      conversation.user = conversation.sender;
+      conversation.user2 = conversation.receiver;
+    }
+    delete conversation.sender;
+    delete conversation.receiver;
+    if (connectedUsers.has(conversation.user.id)) {
+      conversation.user.online = true;
+    } else {
+      conversation.user.online = false;
+    }
+    return conversation;
+  });
+
+  return conversations;
+};
+
 const getConversationList = async (socket, io) => {
   try {
-    let conversations = await Conversations.findAll({
-      where: {
-        [Op.or]: [
-          { receiver_id: socket.user.id },
-          { sender_id: socket.user.id },
-        ],
-      },
-      include: [
-        { model: Users, as: "sender", attributes: { exclude: ["password"] } },
-        { model: Users, as: "receiver", attributes: { exclude: ["password"] } },
-      ],
-    });
     let emitToMySockets = connectedUsers.get(socket.user.id) || [];
-    let emitToOtherSockets = [];
 
-    conversations = conversations.map((element) => {
-      let conversation = element.get({ plain: true });
-      if (conversation.sender_id === socket.user.id) {
-        conversation.user = conversation.receiver;
-        delete conversation.receiver;
-      } else {
-        conversation.user = conversation.sender;
-        delete conversation.sender;
-      }
-      if (connectedUsers.has(conversation.user.id)) {
-        conversation.user.online = true;
-        emitToOtherSockets.push(
-          ...(connectedUsers.get(conversation.user.id) || [])
-        );
-      } else {
-        conversation.user.online = false;
-      }
-      return conversation;
-    });
+    let conversations = await getList(socket.user.id);
 
     emitToMySockets.forEach((socketId) => {
       io.to(socketId).emit("conversationList", conversations);
     });
 
-    conversations = conversations.map((conversation) => {
-      delete conversation.user;
-      if (conversation.sender) {
-        conversation.user = conversation.sender;
-        delete conversation.sender;
-      } else {
-        conversation.user = conversation.receiver;
-        delete conversation.receiver;
+    conversations.map(async (conversation) => {
+      if (
+        conversation.user.id !== socket.user.id &&
+        connectedUsers.has(conversation.user.id)
+      ) {
+        let otherConversations = await getList(conversation.user.id);
+        connectedUsers.get(conversation.user.id).forEach((socketId) => {
+          io.to(socketId).emit("conversationList", otherConversations);
+        });
       }
-      if (connectedUsers.has(conversation.user.id)) {
-        conversation.user.online = true;
-      } else {
-        conversation.user.online = false;
-      }
-      return conversation;
-    });
-    console.log("conver2", conversations);
-    emitToOtherSockets.forEach((socketId) => {
-      console.log("id", socket.user.id);
-      io.to(socketId).emit("conversationList", conversations);
     });
   } catch (error) {
     console.log(error);
