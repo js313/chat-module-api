@@ -16,7 +16,6 @@ const getConversationList = async (socket, io) => {
         { model: Users, as: "receiver", attributes: { exclude: ["password"] } },
       ],
     });
-
     let emitToMySockets = connectedUsers.get(socket.user.id) || [];
     let emitToOtherSockets = [];
 
@@ -39,6 +38,7 @@ const getConversationList = async (socket, io) => {
       }
       return conversation;
     });
+
     emitToMySockets.forEach((socketId) => {
       io.to(socketId).emit("conversationList", conversations);
     });
@@ -59,10 +59,52 @@ const getConversationList = async (socket, io) => {
       }
       return conversation;
     });
-
+    console.log("conver2", conversations);
     emitToOtherSockets.forEach((socketId) => {
+      console.log("id", socket.user.id);
       io.to(socketId).emit("conversationList", conversations);
     });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const getConversation = async (socket, io, data) => {
+  const { conversation_id } = data;
+
+  try {
+    let conversation = await Conversations.findByPk(conversation_id, {
+      include: [
+        {
+          model: Users,
+          as: "sender",
+          attributes: {
+            exclude: ["password", "created_at", "updated_at"],
+          },
+        },
+        {
+          model: Users,
+          as: "receiver",
+          attributes: {
+            exclude: ["password", "created_at", "updated_at"],
+          },
+        },
+      ],
+    });
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
+    conversation = conversation.get({ plain: true });
+    if (conversation.sender.id === socket.user.id) {
+      conversation.sender = undefined;
+      conversation.user = conversation.receiver;
+      conversation.receiver = undefined;
+    } else {
+      conversation.receiver = undefined;
+      conversation.user = conversation.sender;
+      conversation.sender = undefined;
+    }
+    io.to(socket.id).emit("getConversation", conversation);
   } catch (error) {
     console.log(error);
   }
@@ -131,6 +173,7 @@ const deleteConversation = async (socket, io, data) => {
 
 module.exports = {
   getConversationList,
+  getConversation,
   createConversation,
   deleteConversation,
 };

@@ -3,6 +3,7 @@ const { getGroups } = require("./groupUpdates");
 
 const getGroupMembers = async (socket, io, data) => {
   const { group_id } = data;
+
   try {
     const user = await Users.findOne({ where: { id: socket.user.id } });
     if (!user) {

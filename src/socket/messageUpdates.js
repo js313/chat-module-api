@@ -66,7 +66,6 @@ const getAllMessage = async (socket, data) => {
 const sendMessage = async (socket, io, data) => {
   try {
     const { conversation_id, group_id, text, files, req } = data;
-    console.log("data", data);
     // const uploadPromises = files.map((file) => {
     //   return cloudinary.uploader.upload(file.path, { resource_type: "auto" });
     // });

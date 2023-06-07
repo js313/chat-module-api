@@ -9,6 +9,7 @@ const {
   getConversationList,
   createConversation,
   deleteConversation,
+  getConversation,
 } = require("./src/socket/userUpdates");
 const {
   getGroupList,
@@ -16,6 +17,7 @@ const {
   addMemberInGroup,
   updateGroup,
   deleteGroup,
+  getGroup,
 } = require("./src/socket/groupUpdates");
 const {
   getAllMessage,
@@ -61,7 +63,6 @@ const registerSocketServer = (server) => {
         io.to(socket.id).emit("createConversation", conversation);
         connectedUsers.get(conversation.receiver_id)?.forEach((socketId) => {
           io.to(socketId).emit("createConversation", conversation);
-          // getConversationList(socket, io);
         });
       }
     });
@@ -70,14 +71,13 @@ const registerSocketServer = (server) => {
     });
     socket.on("addMember", async (data) => {
       await addMemberInGroup(socket, io, data);
-      socket.emit("groupList");
     });
     socket.on("memberList", async (data) => {
       await getGroupMembers(socket, io, data);
     });
     socket.on("updateMember", async (data) => {
       await updateMembers(socket, io, data);
-      socket.emit("groupList");
+      socket.emit("memberList", data.group_id);
     });
     socket.on("messages", async (data) => {
       let message = await getAllMessage(socket, data);
@@ -88,6 +88,9 @@ const registerSocketServer = (server) => {
     });
     socket.on("updateMessage", async (data) => {
       await updateMessage(socket, io, data);
+    });
+    socket.on("getConversation", async (data) => {
+      await getConversation(socket, io, data);
     });
     socket.on("deleteConversation", async (data) => {
       await deleteConversation(socket, io, data);
@@ -100,16 +103,14 @@ const registerSocketServer = (server) => {
     });
     socket.on("createGroup", async (data) => {
       let group = await createGroup(socket, io, data);
-      // io.to(socket.id).emit("createGroup", group);
-      // try {
-      //   await getGroupList(socket, io);
-      // } catch (error) {
-      //   console.log(error);
-      // }
+      io.to(socket.id).emit("createGroup", group);
     });
     socket.on("updateGroup", async (data) => {
       await updateGroup(socket, io, data);
       await getGroupList(socket, io);
+    });
+    socket.on("getGroup", async (data) => {
+      await getGroup(socket, io, data);
     });
     socket.on("deleteGroup", async (data) => {
       await deleteGroup(socket, io, data);
@@ -118,10 +119,6 @@ const registerSocketServer = (server) => {
 
     socket.on("sendMessage", async (data) => {
       let socketIds = await sendMessage(socket, io, data);
-      // let message = await getAllMessage(socket, data);
-      // socketIds.forEach((id) => {
-      //   io.to(id).emit("messages", message);
-      // });
     });
     socket.on("forwardMessage", async (data) => {
       await forwardMessage(socket, io, data);

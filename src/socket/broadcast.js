@@ -3,7 +3,6 @@ const { connectedUsers } = require("./store");
 
 exports.broadcastToConversation = async (io, data, str, conversationId) => {
   try {
-    console.log("data", data);
     const conversation = await Conversations.findByPk(conversationId);
     connectedUsers.get(conversation.sender_id)?.forEach((socketId) => {
       io.to(socketId).emit(str, data);
@@ -21,7 +20,6 @@ exports.broadcastToGroup = async (io, data, str, group_id) => {
     const members = await Members.findAll({
       where: { group_id: group_id },
     });
-    console.log("member", members);
     members.forEach((member) => {
       connectedUsers.get(member.user_id)?.forEach((socketId) => {
         io.to(socketId).emit(str, data);
