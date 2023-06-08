@@ -46,7 +46,7 @@ module.exports = function (sequelize, DataTypes) {
         },
       },
       group_id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         allowNull: true,
         references: {
           model: Groups,

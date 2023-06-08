@@ -1,5 +1,5 @@
 const { Users, Groups, Members, BlockedUsers } = require("../config/db");
-const { getGroups } = require("./groupUpdates");
+const { getGroups, getGroup } = require("./groupUpdates");
 
 const blockUser = async (socket, io, data) => {
   const { group_id, user_id } = data;
@@ -43,6 +43,7 @@ const blockUser = async (socket, io, data) => {
     members.forEach((member) => {
       getGroups(member.user_id, io);
     });
+    getGroup(socket, io, { group_id });
   } catch (error) {
     console.log(error);
   }
@@ -95,6 +96,7 @@ const unblockUser = async (socket, io, data) => {
     members.forEach((member) => {
       getGroups(member.user_id, io);
     });
+    getGroup(socket, io, { group_id });
   } catch (error) {
     console.log(error);
   }
