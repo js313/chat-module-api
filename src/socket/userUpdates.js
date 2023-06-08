@@ -98,6 +98,9 @@ const getConversation = async (socket, io, data) => {
     }
     io.to(socket.id).emit("getConversation", conversation);
   } catch (error) {
+    const errorCode = 500;
+    const errorMessage = "Something went wrong!";
+    socket.emit("error", { errorCode, errorMessage });
     console.log(error);
   }
 };
@@ -125,6 +128,9 @@ const createConversation = async (socket, io, data) => {
     return conversation;
     // }
   } catch (error) {
+    const errorCode = 500;
+    const errorMessage = "Something went wrong!";
+    socket.emit("error", { errorCode, errorMessage });
     console.log(error);
   }
 };
@@ -159,6 +165,9 @@ const deleteConversation = async (socket, io, data) => {
 
     await conversation.destroy();
   } catch (error) {
+    const errorCode = 500;
+    const errorMessage = "Something went wrong!";
+    socket.emit("error", { errorCode, errorMessage });
     console.log(error);
   }
 };
