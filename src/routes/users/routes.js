@@ -2,9 +2,10 @@ const express = require("express");
 const router = express.Router();
 const controller = require("./controller");
 const passport = require("../../middlewares/passport");
+const upload = require("../../utils/multer");
 
 router.post("/login", controller.login);
-router.post("/register", controller.register);
+router.post("/register", upload.single("image"), controller.register);
 
 router.get(
   "/",

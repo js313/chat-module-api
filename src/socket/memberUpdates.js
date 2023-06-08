@@ -1,4 +1,5 @@
 const { Users, Groups, Members } = require("../config/db");
+const { handleSocketError } = require("../utils/socketErrorMessage");
 const { getGroups } = require("./groupUpdates");
 
 const getGroupMembers = async (socket, io, data) => {
@@ -30,10 +31,7 @@ const getGroupMembers = async (socket, io, data) => {
     });
     io.to(socket.id).emit("memberList", members);
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
@@ -63,10 +61,7 @@ const updateMembers = async (socket, io, data) => {
       getGroups(member.user_id, io);
     });
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Group not found or you are not group admin";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 

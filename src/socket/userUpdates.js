@@ -1,6 +1,7 @@
 const { v4 } = require("uuid");
 const { Users, Conversations, Op, Messages } = require("../config/db");
 const { connectedUsers } = require("./store");
+const { handleSocketError } = require("../utils/socketErrorMessage");
 
 const getList = async (userId) => {
   let conversations = await Conversations.findAll({
@@ -57,7 +58,7 @@ const getConversationList = async (socket, io) => {
       }
     });
   } catch (error) {
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
@@ -98,10 +99,7 @@ const getConversation = async (socket, io, data) => {
     }
     io.to(socket.id).emit("getConversation", conversation);
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
@@ -116,31 +114,21 @@ const createConversation = async (socket, io, data) => {
     if (!receiver) {
       throw new Error("Receiver not found");
     }
-    const getConversation = await Conversations.findAll({
-      where: { sender_id: receiver_id, receiver_id: socket.user.id },
-    });
 
-    // if (!getConversation) {
     const conversation = await Conversations.create({
       sender_id: socket.user.id,
       receiver_id: receiver_id,
     });
     return conversation;
-    // }
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
 const deleteConversation = async (socket, io, data) => {
   const { conversation_id } = data;
   try {
-    const user = await Users.findOne({
-      where: { id: socket.user.id },
-    });
+    const user = await Users.findOne({ where: { id: socket.user.id } });
     if (!user) {
       throw new Error("User not found");
     }
@@ -159,16 +147,11 @@ const deleteConversation = async (socket, io, data) => {
       throw new Error("Conversation not found");
     }
 
-    await Messages.destroy({
-      where: { conversation_id: conversation.id },
-    });
+    await Messages.destroy({ where: { conversation_id: conversation.id } });
 
     await conversation.destroy();
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 

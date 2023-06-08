@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Users, Op } = db;
 const message = require("../../utils/responseMessage");
+const { uploadFile } = require("../../utils/uploadFile");
 
 exports.login = async (req, res) => {
   try {
@@ -40,13 +41,27 @@ exports.login = async (req, res) => {
 exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+    const image = req.file;
     let user = await Users.findOne({ where: { email } });
 
     if (user) {
       return res.status(409).json({ message: "User already exists" });
     }
+
     const hashedPassword = await bcrypt.hash(password, 12);
-    user = await Users.create({ name, email, password: hashedPassword });
+    let imageUrl = null;
+
+    if (image) {
+      imageUrl = await uploadFile(image, req);
+    }
+
+    user = await Users.create({
+      name,
+      email,
+      password: hashedPassword,
+      image: imageUrl,
+    });
+
     const token = jwt.sign(
       { id: user.id, email: user.email },
       process.env.JWT_SECRET_KEY,
@@ -54,17 +69,18 @@ exports.register = async (req, res) => {
         expiresIn: "1000h",
       }
     );
+
     res.status(201).json({
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
+        image: user.image,
       },
       token,
     });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "Internal server error" });
   }
 };
 

@@ -1,6 +1,6 @@
-const { Groups, Members, Users, Messages, Op } = require("../config/db");
-const { broadcastToGroup, broadcastToUser } = require("./broadcast");
-const { getGroupMembers } = require("./memberUpdates");
+const { Groups, Members, Users, Messages } = require("../config/db");
+const { handleSocketError } = require("../utils/socketErrorMessage");
+const { broadcastToGroup } = require("./broadcast");
 const { connectedUsers } = require("./store");
 const { v4 } = require("uuid");
 
@@ -26,10 +26,7 @@ const getGroupList = async (socket, io) => {
     );
     io.to(socket.id).emit("groupList", groups);
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
@@ -57,10 +54,7 @@ const getGroups = async (userId, io) => {
       io.to(socketId).emit("groupList", groups);
     });
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
@@ -71,7 +65,7 @@ const getGroup = async (socket, io, data) => {
       where: { id: group_id },
     });
     if (!group) {
-      throw new Error("Group not found by this link");
+      throw new Error("Group not found");
     }
     const checkUserInMember = await Members.findOne({
       where: { group_id: group.id, user_id: socket.user.id },
@@ -88,12 +82,9 @@ const getGroup = async (socket, io, data) => {
         },
       },
     });
-    io.to(socket.id).emit("getGroup", members);
+    broadcastToGroup(io, members, "getGroup", group_id);
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
@@ -117,23 +108,15 @@ const addMemberInGroup = async (socket, io, data) => {
       throw new Error("User already member of this group");
     }
 
-    await Members.create({
-      group_id: group_id,
-      user_id,
-    });
+    await Members.create({ group_id, user_id });
 
-    const members = await Members.findAll({
-      where: { group_id: group_id },
-    });
+    const members = await Members.findAll({ where: { group_id } });
     members.forEach((member) => {
       getGroups(member.user_id, io);
     });
     getGroup(socket, io, { link: group.link });
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
@@ -154,10 +137,7 @@ const joinGroupWithLink = async (socket, io, data) => {
     });
     return joinGroup;
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
@@ -202,10 +182,7 @@ const createGroup = async (socket, io, data) => {
 
     return { group, members };
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
@@ -218,22 +195,15 @@ const updateGroup = async (socket, io, data) => {
     if (!group) {
       throw new Error("Group not found or you are not group admin");
     } else {
-      await group.update({
-        name: name,
-      });
+      await group.update({ name });
     }
-    const members = await Members.findAll({
-      where: { group_id: group_id },
-    });
+    const members = await Members.findAll({ where: { group_id } });
     members.forEach((member) => {
       getGroups(member.user_id, io);
     });
     getGroup(socket, io, { group_id });
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
@@ -271,10 +241,7 @@ const deleteGroup = async (socket, io, data) => {
       });
     });
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Group not found or you are not group admin";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 

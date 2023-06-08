@@ -1,4 +1,5 @@
 const { UnseenMessages } = require("../config/db");
+const { handleSocketError } = require("../utils/socketErrorMessage");
 
 const getUnseenMessages = async (socket, io, data) => {
   try {
@@ -11,10 +12,7 @@ const getUnseenMessages = async (socket, io, data) => {
     }
     io.to(socket.id).emit("getUnseenMessages", unseenMessages);
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
@@ -29,10 +27,7 @@ const deleteUnseenMessages = async (socket, io, data) => {
     }
     await unseenMessages.destroy();
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 

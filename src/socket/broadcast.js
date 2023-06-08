@@ -1,4 +1,5 @@
 const { Conversations, Members } = require("../config/db");
+const { handleSocketError } = require("../utils/socketErrorMessage");
 const { connectedUsers } = require("./store");
 
 exports.broadcastToConversation = async (io, data, str, conversationId) => {
@@ -11,45 +12,32 @@ exports.broadcastToConversation = async (io, data, str, conversationId) => {
       io.to(socketId).emit(str, data);
     });
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
 exports.broadcastToGroup = async (io, data, str, group_id) => {
   try {
-    const members = await Members.findAll({
-      where: { group_id: group_id },
-    });
+    const members = await Members.findAll({ where: { group_id } });
     members.forEach((member) => {
       connectedUsers.get(member.user_id)?.forEach((socketId) => {
         io.to(socketId).emit(str, data);
       });
     });
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
 exports.broadcastToUser = async (io, data, str, userId) => {
   try {
-    const members = await Members.findAll({
-      where: { user_id: userId },
-    });
+    const members = await Members.findAll({ where: { user_id: userId } });
     members.forEach((member) => {
       connectedUsers.get(member.user_id)?.forEach((socketId) => {
         io.to(socketId).emit(str, data);
       });
     });
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };

@@ -2,12 +2,13 @@ const {
   Messages,
   Conversations,
   Members,
-  Groups,
   Users,
   sequelize,
   Op,
   UnseenMessages,
 } = require("../config/db");
+const { handleSocketError } = require("../utils/socketErrorMessage");
+const { uploadFile } = require("../utils/uploadFile");
 const { broadcastToConversation, broadcastToGroup } = require("./broadcast");
 const { connectedUsers } = require("./store");
 const fs = require("fs");
@@ -60,10 +61,7 @@ const getAllMessage = async (socket, data) => {
     }
     return messages;
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
@@ -123,12 +121,8 @@ const sendMessage = async (socket, io, data) => {
       throw new Error("not found");
     }
     let fileUrls = [];
-    let fullUrl;
     if (req) {
-      fullUrl = req.protocol + "://" + req.get("host");
-      files?.forEach((file) => {
-        fileUrls.push(fullUrl + "/" + file.path);
-      });
+      fileUrls = await Promise.all(files.map((file) => uploadFile(file, req)));
     }
 
     let receiverIds = [];
@@ -259,19 +253,14 @@ const forwardMessage = async (socket, io, data) => {
     const senderIds = connectedUsers.get(socket.user.id) || [];
     return [...receiverIds, ...senderIds];
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
 const updateMessage = async (socket, io, data) => {
   const { message_id, text } = data;
   try {
-    const user = await Users.findOne({
-      where: { id: socket.user.id },
-    });
+    const user = await Users.findOne({ where: { id: socket.user.id } });
     if (!user) {
       throw new Error("User not found");
     }
@@ -282,9 +271,7 @@ const updateMessage = async (socket, io, data) => {
     if (!message) {
       return;
     }
-    await message.update({
-      text: text,
-    });
+    await message.update({ text: text });
     let allMessages = await getAllMessage(socket, {
       conversation_id: message.conversation_id,
       group_id: message.group_id,
@@ -300,19 +287,14 @@ const updateMessage = async (socket, io, data) => {
       broadcastToGroup(io, allMessages, "messages", message.group_id);
     }
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
 const deleteMessage = async (socket, io, data) => {
   const { message_id } = data;
   try {
-    const user = await Users.findOne({
-      where: { id: socket.user.id },
-    });
+    const user = await Users.findOne({ where: { id: socket.user.id } });
 
     if (!user) {
       throw new Error("User not found");
@@ -323,9 +305,7 @@ const deleteMessage = async (socket, io, data) => {
     if (!message) {
       return;
     }
-    await message.update({
-      hidden: true,
-    });
+    await message.update({ hidden: true });
     let allMessages = await getAllMessage(socket, {
       conversation_id: message.conversation_id,
       group_id: message.group_id,
@@ -341,10 +321,7 @@ const deleteMessage = async (socket, io, data) => {
       broadcastToGroup(io, allMessages, "messages", message.group_id);
     }
   } catch (error) {
-    const errorCode = 500;
-    const errorMessage = "Something went wrong!";
-    socket.emit("error", { errorCode, errorMessage });
-    console.log(error);
+    handleSocketError(io, error);
   }
 };
 
