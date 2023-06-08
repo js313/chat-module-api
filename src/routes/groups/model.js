@@ -5,10 +5,10 @@ module.exports = function (sequelize, DataTypes) {
     "Groups",
     {
       id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
         allowNull: false,
         primaryKey: true,
-        autoIncrement: true,
       },
       created_by: {
         type: DataTypes.INTEGER,
@@ -20,10 +20,6 @@ module.exports = function (sequelize, DataTypes) {
       },
       name: {
         type: DataTypes.STRING(255),
-        allowNull: false,
-      },
-      link: {
-        type: DataTypes.STRING,
         allowNull: false,
       },
       created_at: {
