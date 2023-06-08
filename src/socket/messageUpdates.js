@@ -10,6 +10,7 @@ const {
 } = require("../config/db");
 const { broadcastToConversation, broadcastToGroup } = require("./broadcast");
 const { connectedUsers } = require("./store");
+const fs = require("fs");
 
 const getAllMessage = async (socket, data) => {
   try {
@@ -59,6 +60,9 @@ const getAllMessage = async (socket, data) => {
     }
     return messages;
   } catch (error) {
+    const errorCode = 500;
+    const errorMessage = "Something went wrong!";
+    socket.emit("error", { errorCode, errorMessage });
     console.log(error);
   }
 };
@@ -66,6 +70,7 @@ const getAllMessage = async (socket, data) => {
 const sendMessage = async (socket, io, data) => {
   try {
     const { conversation_id, group_id, text, files, req } = data;
+
     // const uploadPromises = files.map((file) => {
     //   return cloudinary.uploader.upload(file.path, { resource_type: "auto" });
     // });
@@ -121,7 +126,7 @@ const sendMessage = async (socket, io, data) => {
     let fullUrl;
     if (req) {
       fullUrl = req.protocol + "://" + req.get("host");
-      files.forEach((file) => {
+      files?.forEach((file) => {
         fileUrls.push(fullUrl + "/" + file.path);
       });
     }
@@ -170,6 +175,16 @@ const sendMessage = async (socket, io, data) => {
     return [...receiverIds, ...senderIds];
   } catch (error) {
     console.log(error);
+    data?.req.files.forEach((file) => {
+      fs.unlink(file.path, (unlinkError) => {
+        if (unlinkError) {
+          throw new AppError(
+            "Failed to delete the uploaded file:" + unlinkError.toString(),
+            500
+          );
+        }
+      });
+    });
   }
 };
 
@@ -244,6 +259,9 @@ const forwardMessage = async (socket, io, data) => {
     const senderIds = connectedUsers.get(socket.user.id) || [];
     return [...receiverIds, ...senderIds];
   } catch (error) {
+    const errorCode = 500;
+    const errorMessage = "Something went wrong!";
+    socket.emit("error", { errorCode, errorMessage });
     console.log(error);
   }
 };
@@ -282,6 +300,9 @@ const updateMessage = async (socket, io, data) => {
       broadcastToGroup(io, allMessages, "messages", message.group_id);
     }
   } catch (error) {
+    const errorCode = 500;
+    const errorMessage = "Something went wrong!";
+    socket.emit("error", { errorCode, errorMessage });
     console.log(error);
   }
 };
@@ -320,6 +341,9 @@ const deleteMessage = async (socket, io, data) => {
       broadcastToGroup(io, allMessages, "messages", message.group_id);
     }
   } catch (error) {
+    const errorCode = 500;
+    const errorMessage = "Something went wrong!";
+    socket.emit("error", { errorCode, errorMessage });
     console.log(error);
   }
 };
