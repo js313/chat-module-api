@@ -11,6 +11,9 @@ exports.broadcastToConversation = async (io, data, str, conversationId) => {
       io.to(socketId).emit(str, data);
     });
   } catch (error) {
+    const errorCode = 500;
+    const errorMessage = "Something went wrong!";
+    socket.emit("error", { errorCode, errorMessage });
     console.log(error);
   }
 };
@@ -26,6 +29,9 @@ exports.broadcastToGroup = async (io, data, str, group_id) => {
       });
     });
   } catch (error) {
+    const errorCode = 500;
+    const errorMessage = "Something went wrong!";
+    socket.emit("error", { errorCode, errorMessage });
     console.log(error);
   }
 };
@@ -41,6 +47,9 @@ exports.broadcastToUser = async (io, data, str, userId) => {
       });
     });
   } catch (error) {
+    const errorCode = 500;
+    const errorMessage = "Something went wrong!";
+    socket.emit("error", { errorCode, errorMessage });
     console.log(error);
   }
 };
